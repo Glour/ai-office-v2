@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "name": "Backend",
+  "model": {
+    "default": "{{AGENT_MODEL}}",
+    "thinking": "adaptive"
+  },
+  "apiKeys": {
+    "anthropic": "{{ANTHROPIC_API_KEY}}",
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{BACKEND_TELEGRAM_BOT_TOKEN}}",
+          "authorizedSenders": ["{{OWNER_TELEGRAM_ID}}"]
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "Boss — route, escalation, and final delivery"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/backend"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}

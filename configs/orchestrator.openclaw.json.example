@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "name": "Orchestrator",
+  "model": {
+    "default": "{{MAIN_MODEL}}",
+    "thinking": "adaptive"
+  },
+  "apiKeys": {
+    "anthropic": "{{ANTHROPIC_API_KEY}}",
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{ORCHESTRATOR_TELEGRAM_BOT_TOKEN}}",
+          "authorizedSenders": ["{{OWNER_TELEGRAM_ID}}"]
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "frontend": {
+        "sessionKey": "agent:frontend:main",
+        "description": "Frontend developer for UI and interaction implementation"
+      },
+      "backend": {
+        "sessionKey": "agent:backend:main",
+        "description": "Backend engineer for APIs, data model, and integrations"
+      },
+      "design": {
+        "sessionKey": "agent:design:main",
+        "description": "Designer for layout, UX, prototypes, and visual direction"
+      },
+      "content": {
+        "sessionKey": "agent:content:main",
+        "description": "Content planning, text creation, messaging, documentation"
+      },
+      "media": {
+        "sessionKey": "agent:media:main",
+        "description": "Media creator for photos, video plans, and visual packages"
+      },
+      "research": {
+        "sessionKey": "agent:research:main",
+        "description": "Research and competitive analysis"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/orchestrator"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}

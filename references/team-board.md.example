@@ -1,0 +1,33 @@
+# Team Board
+
+## Alex Personal Team — Canonical State
+
+### 👥 Команда
+
+- **orchestrator** — главная точка входа, принимает задачи, маршрутизирует
+- **frontend** — интерфейс, UI, компоненты
+- **backend** — API, БД, интеграции
+- **design** — UX/UI концепты и прототипирование
+- **content** — тексты, презентации, коммуникации
+- **media** — фото/видео брифинги и медиапакеты
+- **research** — мониторинг и факт-чек
+
+Связь с агентами:
+
+- `sessions_send(sessionKey="agent:orchestrator:main")`
+- `sessions_send(sessionKey="agent:frontend:main")`
+- `sessions_send(sessionKey="agent:backend:main")`
+- `sessions_send(sessionKey="agent:design:main")`
+- `sessions_send(sessionKey="agent:content:main")`
+- `sessions_send(sessionKey="agent:media:main")`
+- `sessions_send(sessionKey="agent:research:main")`
+
+### 📋 Доска задач
+
+Формат записи:
+`- [статус] [дата] [от кого → кому] задача`
+Статусы: 📋 новая | ⏳ в работе | ✅ готово | ❌ отмена
+
+### 📢 Объявления
+
+- [YYYY-MM-DD] Команда инициализирована. Основной режим: orchestrator-first.
