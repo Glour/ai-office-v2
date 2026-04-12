@@ -182,6 +182,10 @@ done
 
 echo ""
 
+echo "🧵 Applying Telegram topic routing..."
+bash "$REPO_DIR/scripts/configure-telegram-topics.sh"
+echo ""
+
 # Verify installation
 echo "🔍 Verifying..."
 AGENT_COUNT=$(find "$OPENCLAW_AGENTS_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')

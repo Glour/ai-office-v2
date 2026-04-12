@@ -63,6 +63,23 @@ openclaw --profile personal status
 openclaw --profile personal agents list
 ```
 
+Если команда живёт в Telegram-топиках, добавь в `.env`:
+
+```bash
+TEAM_TELEGRAM_GROUP_ID=-100...
+ORCHESTRATOR_TOPIC_ID=1
+FRONTEND_TOPIC_ID=13
+BACKEND_TOPIC_ID=12
+DESIGN_TOPIC_ID=16
+CONTENT_TOPIC_ID=15
+RESEARCH_TOPIC_ID=14
+```
+
+Тогда `setup.sh` автоматически:
+- отключит общий group routing для каждого бота;
+- включит `open` только в его собственном topic;
+- перезапустит `personal` gateway.
+
 7. Локальный smoke test без Telegram:
 
 ```bash
