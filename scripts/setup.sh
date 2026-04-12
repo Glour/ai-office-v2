@@ -182,6 +182,10 @@ done
 
 echo ""
 
+echo "🔐 Syncing auth profiles..."
+bash "$REPO_DIR/scripts/sync-auth-profiles.sh"
+echo ""
+
 echo "🧵 Applying Telegram topic routing..."
 bash "$REPO_DIR/scripts/configure-telegram-topics.sh"
 echo ""

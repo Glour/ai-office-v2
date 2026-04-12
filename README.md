@@ -78,6 +78,7 @@ RESEARCH_TOPIC_ID=14
 Тогда `setup.sh` автоматически:
 - отключит общий group routing для каждого бота;
 - включит `open` только в его собственном topic;
+- синхронизирует `auth-profiles.json` в изолированные agent dirs;
 - перезапустит `personal` gateway.
 
 7. Локальный smoke test без Telegram:
