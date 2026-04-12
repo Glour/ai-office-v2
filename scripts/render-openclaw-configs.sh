@@ -84,9 +84,9 @@ for agent in "${AGENTS[@]}"; do
       rg -n '\{\{' "$DST" || true
       continue
     fi
-  elif grep -q '\{\{' "$DST"; then
+  elif grep -Fq '{{' "$DST"; then
     echo "⚠️  $agent: config still has unresolved placeholders"
-    grep -n '\{\{' "$DST"
+    grep -Fn '{{' "$DST"
     continue
   fi
 
