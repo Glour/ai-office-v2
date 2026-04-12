@@ -23,8 +23,7 @@
       "telegram": {
         "enabled": true,
         "config": {
-          "botToken": "{{ORCHESTRATOR_TELEGRAM_BOT_TOKEN}}",
-          "authorizedSenders": ["{{OWNER_TELEGRAM_ID}}"]
+          "botToken": "{{ORCHESTRATOR_TELEGRAM_BOT_TOKEN}}"
         }
       }
     }

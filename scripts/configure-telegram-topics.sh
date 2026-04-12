@@ -64,7 +64,7 @@ for agent in $(team_agent_ids); do
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
     "channels.telegram.accounts.${agent}.groupPolicy" \
-    "$(json_string disabled)" \
+    "$(json_string allowlist)" \
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \

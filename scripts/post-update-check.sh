@@ -746,15 +746,34 @@ audio = data.get('tools',{}).get('media',{}).get('audio',{})
 enabled = audio.get('enabled', False)
 models = audio.get('models',[])
 has_script = any('transcribe' in str(m.get('command','')) for m in models) if models else False
-if enabled and has_script:
-    print('ok')
+has_provider = any(str(m.get('provider','')).strip() for m in models) if models else False
+if enabled and (has_script or has_provider):
+    if has_provider:
+        print('ok:provider')
+    else:
+        print('ok:script')
 else:
-    print(f'enabled={enabled} script={has_script}')
+    print(f'enabled={enabled} script={has_script} provider={has_provider}')
 " 2>/dev/null)
-if [ "$AUDIO_OK" = "ok" ]; then
+if [ "$AUDIO_OK" = "ok:provider" ]; then
+    check_ok "audio provider configured"
+elif [ "$AUDIO_OK" = "ok:script" ]; then
     check_ok "transcribe.sh configured"
 else
-    python3 -c "
+    if [ -n \"${DEEPGRAM_API_KEY:-}\" ]; then
+        python3 -c "
+import json
+with open('$CONFIG_FILE') as f:
+    data = json.load(f)
+audio = data.setdefault('tools',{}).setdefault('media',{}).setdefault('audio',{})
+audio['enabled'] = True
+audio['models'] = [{'provider':'deepgram'}]
+with open('$CONFIG_FILE','w') as f:
+    json.dump(data,f,indent=2,ensure_ascii=False)
+" 2>/dev/null
+        check_fixed "Audio transcription restored" "Audio transcription → Deepgram provider"
+    else
+        python3 -c "
 import json
 with open('$CONFIG_FILE') as f:
     data = json.load(f)
@@ -764,7 +783,8 @@ audio['models'] = [{'type':'cli','command':'${WORKSPACE_PATH:-$HOME/workspace}/s
 with open('$CONFIG_FILE','w') as f:
     json.dump(data,f,indent=2,ensure_ascii=False)
 " 2>/dev/null
-    check_fixed "Audio transcription restored" "Audio transcription → transcribe.sh"
+        check_fixed "Audio transcription restored" "Audio transcription → transcribe.sh"
+    fi
 fi
 
 # 21. Context pruning

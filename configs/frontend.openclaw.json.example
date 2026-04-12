@@ -23,8 +23,7 @@
       "telegram": {
         "enabled": true,
         "config": {
-          "botToken": "{{FRONTEND_TELEGRAM_BOT_TOKEN}}",
-          "authorizedSenders": ["{{OWNER_TELEGRAM_ID}}"]
+          "botToken": "{{FRONTEND_TELEGRAM_BOT_TOKEN}}"
         }
       }
     }
