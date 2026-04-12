@@ -11,6 +11,7 @@ models.json
 # OS files
 .DS_Store
 Thumbs.db
+.idea/
 
 # Node
 node_modules/
