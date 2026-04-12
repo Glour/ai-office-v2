@@ -19,10 +19,35 @@ set -a
 source "$ENV_FILE"
 set +a
 
+is_real_secret() {
+  local value="${1:-}"
+  [[ -n "$value" ]] || return 1
+  [[ "$value" != your-* ]] || return 1
+  [[ "$value" != *placeholder* ]] || return 1
+  [[ "$value" != *changeme* ]] || return 1
+  return 0
+}
+
+OPENCLAW_AUTH_CHOICE="${OPENCLAW_AUTH_CHOICE:-}"
+if [[ -z "$OPENCLAW_AUTH_CHOICE" ]]; then
+  if is_real_secret "${ANTHROPIC_API_KEY:-}"; then
+    OPENCLAW_AUTH_CHOICE="anthropic-api-key"
+  elif is_real_secret "${OPENAI_API_KEY:-}"; then
+    OPENCLAW_AUTH_CHOICE="openai-api-key"
+  else
+    OPENCLAW_AUTH_CHOICE="openai-codex"
+  fi
+fi
+
 export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
 export WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
-export MAIN_MODEL="${MAIN_MODEL:-anthropic/claude-opus-4-5}"
-export AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4-5}"
+if [[ "$OPENCLAW_AUTH_CHOICE" == "openai-codex" ]]; then
+  export MAIN_MODEL="${MAIN_MODEL:-openai/gpt-5-codex}"
+  export AGENT_MODEL="${AGENT_MODEL:-openai/gpt-5-codex}"
+else
+  export MAIN_MODEL="${MAIN_MODEL:-anthropic/claude-opus-4-5}"
+  export AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4-5}"
+fi
 export EMBEDDING_PROVIDER="${EMBEDDING_PROVIDER:-openai}"
 export EMBEDDING_MODEL="${EMBEDDING_MODEL:-text-embedding-3-small}"
 

@@ -11,7 +11,39 @@ if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
   set +a
 fi
-OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw-personal}/agents"
+
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_STATE_DIR="$HOME/.openclaw-${OPENCLAW_PROFILE}"
+OPENCLAW_AGENTS_ROOT="$OPENCLAW_STATE_DIR/agents"
+WORKSPACE_ROOT="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
+
+is_real_secret() {
+  local value="${1:-}"
+  [[ -n "$value" ]] || return 1
+  [[ "$value" != your-* ]] || return 1
+  [[ "$value" != *placeholder* ]] || return 1
+  [[ "$value" != *changeme* ]] || return 1
+  return 0
+}
+
+OPENCLAW_AUTH_CHOICE="${OPENCLAW_AUTH_CHOICE:-}"
+if [ -z "$OPENCLAW_AUTH_CHOICE" ]; then
+  if is_real_secret "${ANTHROPIC_API_KEY:-}"; then
+    OPENCLAW_AUTH_CHOICE="anthropic-api-key"
+  elif is_real_secret "${OPENAI_API_KEY:-}"; then
+    OPENCLAW_AUTH_CHOICE="openai-api-key"
+  else
+    OPENCLAW_AUTH_CHOICE="openai-codex"
+  fi
+fi
+
+if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
+  MAIN_MODEL="${MAIN_MODEL:-openai/gpt-5-codex}"
+  AGENT_MODEL="${AGENT_MODEL:-openai/gpt-5-codex}"
+else
+  MAIN_MODEL="${MAIN_MODEL:-anthropic/claude-opus-4-5}"
+  AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4-5}"
+fi
 
 echo "🧪 Personal AI Team - Setup"
 echo "=========================="
@@ -41,12 +73,49 @@ for id in "${TEAM_AGENT_IDS[@]}"; do
   AGENT_MAP+=("$id:$id")
 done
 
+if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
+  echo "🪪 Initializing OpenClaw profile: $OPENCLAW_PROFILE"
+
+  if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
+    echo "🔐 Auth mode: openai-codex (Sign in with ChatGPT)"
+    openclaw --profile "$OPENCLAW_PROFILE" onboard \
+      --mode local \
+      --flow quickstart \
+      --accept-risk \
+      --no-install-daemon \
+      --skip-channels \
+      --skip-skills \
+      --skip-ui \
+      --skip-health \
+      --auth-choice openai-codex \
+      --workspace "$WORKSPACE_ROOT/$(team_orchestrator_id)"
+  else
+    openclaw --profile "$OPENCLAW_PROFILE" onboard \
+      --mode local \
+      --flow quickstart \
+      --non-interactive \
+      --accept-risk \
+      --no-install-daemon \
+      --skip-channels \
+      --skip-skills \
+      --skip-ui \
+      --skip-health \
+      --auth-choice skip \
+      --workspace "$WORKSPACE_ROOT/$(team_orchestrator_id)"
+  fi
+  echo ""
+fi
+
+echo "🧩 Rendering agent configs..."
+bash "$REPO_DIR/scripts/render-openclaw-configs.sh" "$ENV_FILE"
+echo ""
+
 echo "📦 Installing agents..."
 for pair in "${AGENT_MAP[@]}"; do
   char_name="${pair%%:*}"
   agent_name="${pair##*:}"
   src="$REPO_DIR/agents/$char_name"
-  dest="$OPENCLAW_DIR/$agent_name/agent"
+  dest="$OPENCLAW_AGENTS_ROOT/$agent_name/agent"
   
   if [ -d "$src" ]; then
     mkdir -p "$dest"
@@ -59,7 +128,7 @@ done
 
 echo ""
 echo "📚 Installing skills..."
-SKILLS_DEST="$OPENCLAW_DIR/$(team_orchestrator_id)/agent/skills"
+SKILLS_DEST="$OPENCLAW_AGENTS_ROOT/$(team_orchestrator_id)/agent/skills"
 if [ -d "$REPO_DIR/skills" ]; then
   mkdir -p "$SKILLS_DEST"
   SKILL_OK=0
@@ -89,9 +158,33 @@ fi
 
 echo ""
 
+# Register isolated agents in the active OpenClaw profile.
+echo "🧭 Registering agents in OpenClaw profile..."
+REGISTERED_AGENTS="$(openclaw --profile "$OPENCLAW_PROFILE" agents list 2>/dev/null || true)"
+for id in "${TEAM_AGENT_IDS[@]}"; do
+  if [ "$id" = "$(team_orchestrator_id)" ]; then
+    model="$MAIN_MODEL"
+  else
+    model="$AGENT_MODEL"
+  fi
+
+  if printf '%s\n' "$REGISTERED_AGENTS" | grep -Fq -- "- $id"; then
+    echo "  ↺ $id already registered"
+  else
+    openclaw --profile "$OPENCLAW_PROFILE" agents add "$id" \
+      --workspace "$WORKSPACE_ROOT/$id" \
+      --agent-dir "$OPENCLAW_AGENTS_ROOT/$id/agent" \
+      --model "$model" \
+      --non-interactive >/dev/null
+    echo "  ✓ $id registered"
+  fi
+done
+
+echo ""
+
 # Verify installation
 echo "🔍 Verifying..."
-AGENT_COUNT=$(ls "$OPENCLAW_DIR" 2>/dev/null | wc -l | tr -d ' ')
+AGENT_COUNT=$(find "$OPENCLAW_AGENTS_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
 echo "  Agents installed: $AGENT_COUNT/${TEAM_AGENT_COUNT}"
 if [ "$AGENT_COUNT" -lt "$TEAM_AGENT_COUNT" ]; then
   echo "  ⚠ Expected ${TEAM_AGENT_COUNT} agents. Check the output above for errors."
@@ -110,11 +203,18 @@ echo "=========================="
 echo "✅ Setup complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Run: openclaw init (if first time)"
-echo "  2. Run: openclaw gateway start"
-  echo "  3. Run: openclaw status (verify ${TEAM_AGENT_COUNT} agents)"
-echo "  4. Send a message to your bot"
+if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
+  echo "  1. If prompted, complete Sign in with ChatGPT for Codex/OpenAI auth"
+else
+  echo "  1. Fill .env with a real LLM API key"
+fi
+echo "  2. Run: bash scripts/start-team.sh"
+echo "  3. Verify: openclaw --profile $OPENCLAW_PROFILE status"
+echo "  4. Test a turn: openclaw --profile $OPENCLAW_PROFILE agent --agent orchestrator --local --message 'ping'"
 echo ""
-echo "📖 Guide: docs/first-task.md"
+echo "Profile: $OPENCLAW_PROFILE"
+echo "Auth choice: $OPENCLAW_AUTH_CHOICE"
+echo "Agent state: $OPENCLAW_AGENTS_ROOT"
+echo "Workspaces: $WORKSPACE_ROOT"
 echo ""
 echo "🧪 Say my name."

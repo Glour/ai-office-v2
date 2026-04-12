@@ -8,7 +8,6 @@ TEAM_AGENT_IDS=(
   "backend"
   "design"
   "content"
-  "media"
   "research"
 )
 
@@ -21,7 +20,6 @@ TEAM_AGENT_NAMES=(
   "Пульсар"
   "Сеть"
   "Глас"
-  "Блик"
   "Радар"
 )
 
