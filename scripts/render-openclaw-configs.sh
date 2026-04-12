@@ -78,9 +78,15 @@ for agent in "${AGENTS[@]}"; do
   perl -pe 's/\{\{([A-Z0-9_]+)\}\}/(exists $ENV{$1} ? $ENV{$1} : "")/ge' \
     "$SRC" > "$DST"
 
-  if rg -q '\{\{' "$DST"; then
+  if command -v rg >/dev/null 2>&1; then
+    if rg -q '\{\{' "$DST"; then
+      echo "⚠️  $agent: config still has unresolved placeholders"
+      rg -n '\{\{' "$DST" || true
+      continue
+    fi
+  elif grep -q '\{\{' "$DST"; then
     echo "⚠️  $agent: config still has unresolved placeholders"
-    rg -n '\{\{' "$DST" || true
+    grep -n '\{\{' "$DST"
     continue
   fi
 
