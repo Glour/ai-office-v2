@@ -3,7 +3,7 @@
 Репозиторий для изолированной команды OpenClaw-агентов: `orchestrator`, `frontend`, `backend`, `design`, `content`, `media`, `research`.
 
 Текущее базовое состояние:
-- профиль OpenClaw: `personal`
+- профиль OpenClaw: `default` (`~/.openclaw`)
 - дефолтная модель: `gpt-5.4`
 - дефолтный thinking: `high`
 - дефолтный reasoning: `on`
@@ -30,7 +30,7 @@ cp .env.example .env
 bash scripts/deploy-team.sh
 ```
 
-4. Инициализируй профиль `personal`, срендери конфиги и зарегистрируй агентов:
+4. Инициализируй обычный контур OpenClaw, срендери конфиги и зарегистрируй агентов:
 
 ```bash
 bash scripts/setup.sh
@@ -45,8 +45,8 @@ bash scripts/start-team.sh
 6. Проверь состояние:
 
 ```bash
-openclaw --profile personal status
-openclaw --profile personal agents list
+openclaw status
+openclaw agents list
 bash scripts/smoke-test.sh
 ```
 
@@ -88,7 +88,7 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 Основные скрипты:
 - `scripts/deploy-team.sh` — создаёт/обновляет workspaces агентов
 - `scripts/render-openclaw-configs.sh` — рендерит `openclaw.json` из шаблонов
-- `scripts/setup.sh` — регистрирует команду в профиле `personal`
+- `scripts/setup.sh` — регистрирует команду в обычном профиле OpenClaw
 - `scripts/start-team.sh` — поднимает gateway
 - `scripts/stop-team.sh` — останавливает gateway
 - `scripts/configure-telegram-topics.sh` — включает topic routing
@@ -99,4 +99,4 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 
 - Не рассчитывай на старый сценарий `openclaw gateway start` «вручную из головы» без нормального профиля и service install.
 - Не используй `openclaw gateway restart` внутри живой агентной сессии.
-- Источник истины для команды — этот репозиторий и профиль `personal`, а не разрозненные ручные правки в агентных каталогах.
+- Источник истины для команды — этот репозиторий и обычный контур OpenClaw, а не разрозненные ручные правки в агентных каталогах.

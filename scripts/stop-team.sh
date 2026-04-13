@@ -13,7 +13,7 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
 
 echo "🛑 Stopping Personal Team"
 echo "================================"

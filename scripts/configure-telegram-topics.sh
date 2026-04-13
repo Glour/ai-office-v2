@@ -14,10 +14,10 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
 TEAM_TELEGRAM_GROUP_ID="${TEAM_TELEGRAM_GROUP_ID:-${TELEGRAM_TEAM_GROUP_ID:-}}"
 OWNER_TELEGRAM_ID="${OWNER_TELEGRAM_ID:-}"
-PROFILE_CONFIG_PATH="$HOME/.openclaw-${OPENCLAW_PROFILE}/openclaw.json"
+PROFILE_CONFIG_PATH="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")/openclaw.json"
 
 gateway_is_running() {
   openclaw --profile "$OPENCLAW_PROFILE" gateway status 2>/dev/null | grep -q 'RPC probe: ok'

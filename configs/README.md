@@ -24,10 +24,10 @@
 
 ## Применение
 
-Лучший путь — через `scripts/render-openclaw-configs.sh`, который читает `.env` и сразу пишет готовые конфиги в `~/.openclaw-personal/agents/<agent>/openclaw.json`.
+Лучший путь — через `scripts/render-openclaw-configs.sh`, который читает `.env` и сразу пишет готовые конфиги в `~/.openclaw/agents/<agent>/openclaw.json`.
 
 Альтернатива вручную:
 
 ```bash
-cp configs/orchestrator.openclaw.json.example ~/.openclaw-personal/agents/orchestrator/openclaw.json
+cp configs/orchestrator.openclaw.json.example ~/.openclaw/agents/orchestrator/openclaw.json
 ```

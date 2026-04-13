@@ -269,8 +269,8 @@ echo ""
 echo -e "${BOLD}Step 4/5: Installing agents and skills...${NC}"
 echo ""
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
-OPENCLAW_DIR="$HOME/.openclaw-${OPENCLAW_PROFILE}/agents"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
+OPENCLAW_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")/agents"
 
 AGENT_MAP=()
 for id in "${TEAM_AGENT_IDS[@]}"; do

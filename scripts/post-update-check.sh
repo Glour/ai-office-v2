@@ -13,7 +13,8 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
+OPENCLAW_STATE_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")"
 
 echo "🔎 Post-update check"
 echo "================================"
@@ -24,7 +25,7 @@ command -v openclaw >/dev/null 2>&1 || {
   exit 1
 }
 
-if [ ! -f "$HOME/.openclaw-${OPENCLAW_PROFILE}/openclaw.json" ]; then
+if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   echo "❌ Profile '$OPENCLAW_PROFILE' is not initialized"
   echo "   Run: bash scripts/setup.sh"
   exit 1

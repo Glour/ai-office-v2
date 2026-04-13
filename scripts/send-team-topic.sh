@@ -25,7 +25,7 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
 OPENCLAW_BIN="${OPENCLAW_BIN:-$(command -v openclaw || true)}"
 TEAM_TELEGRAM_GROUP_ID="${TEAM_TELEGRAM_GROUP_ID:-${TELEGRAM_TEAM_GROUP_ID:-}}"
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# start-team.sh — Start the shared OpenClaw gateway for the Personal Team profile
+# start-team.sh — Start the shared OpenClaw gateway for the team profile
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -13,7 +13,8 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
+OPENCLAW_STATE_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")"
 
 is_real_secret() {
   local value="${1:-}"
@@ -33,14 +34,14 @@ if [ -z "$OPENCLAW_AUTH_CHOICE" ]; then
   fi
 fi
 
-echo "🚀 Starting Personal Team"
+echo "🚀 Starting Agent Team"
 echo "================================"
 echo "Profile: $OPENCLAW_PROFILE"
 echo "Auth choice: $OPENCLAW_AUTH_CHOICE"
-echo "Workspace root: ${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
+echo "Workspace root: ${OPENCLAW_AGENTS_DIR:-$(team_openclaw_agents_dir)}"
 echo ""
 
-if [ ! -f "$HOME/.openclaw-${OPENCLAW_PROFILE}/openclaw.json" ]; then
+if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
   echo "❌ OpenClaw profile '$OPENCLAW_PROFILE' is not initialized."
   echo "   Run: bash scripts/setup.sh"
   exit 1

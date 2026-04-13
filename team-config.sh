@@ -55,6 +55,26 @@ team_agent_name() {
 TEAM_AGENT_COUNT="${#TEAM_AGENT_IDS[@]}"
 TEAM_RESEARCH_AGENT_ID="research"
 
+team_openclaw_profile() {
+  echo "${OPENCLAW_PROFILE:-default}"
+}
+
+team_openclaw_state_dir() {
+  local profile="${1:-$(team_openclaw_profile)}"
+
+  if [ -n "${OPENCLAW_DIR:-}" ]; then
+    echo "$OPENCLAW_DIR"
+  elif [ -z "$profile" ] || [ "$profile" = "default" ]; then
+    echo "$HOME/.openclaw"
+  else
+    echo "$HOME/.openclaw-$profile"
+  fi
+}
+
+team_openclaw_agents_dir() {
+  echo "${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents}"
+}
+
 team_agent_is_valid_id() {
   local needle="$1"
   local candidate

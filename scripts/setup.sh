@@ -12,10 +12,10 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
-OPENCLAW_STATE_DIR="$HOME/.openclaw-${OPENCLAW_PROFILE}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
+OPENCLAW_STATE_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")"
 OPENCLAW_AGENTS_ROOT="$OPENCLAW_STATE_DIR/agents"
-WORKSPACE_ROOT="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
+WORKSPACE_ROOT="$(team_openclaw_agents_dir)"
 
 is_real_secret() {
   local value="${1:-}"

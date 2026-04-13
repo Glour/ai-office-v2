@@ -24,8 +24,8 @@ REFS_DIR="$REPO_DIR/references"
 SCRIPTS_DIR="$REPO_DIR/scripts"
 CONFIGS_DIR="$REPO_DIR/configs"
 
-BASE_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
-OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw-personal}"
+BASE_DIR="$(team_openclaw_agents_dir)"
+OPENCLAW_DIR="$(team_openclaw_state_dir)"
 FORCE=false
 
 export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$BASE_DIR}"
@@ -54,7 +54,7 @@ for arg in "$@"; do
       echo "  --force   Overwrite existing agent workspaces"
       echo ""
       echo "Environment:"
-  echo "  OPENCLAW_AGENTS_DIR   Base directory for agent workspaces (default: ~/openclaw-agents-personal)"
+  echo "  OPENCLAW_AGENTS_DIR   Base directory for agent workspaces (default: ~/openclaw-agents)"
       exit 0
       ;;
   esac

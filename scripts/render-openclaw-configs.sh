@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# render-openclaw-configs.sh — render OpenClaw configs for all personal agents
+# render-openclaw-configs.sh — render OpenClaw configs for all team agents
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${1:-$ROOT_DIR/.env}"
 source "$ROOT_DIR/team-config.sh"
-OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw-personal}"
+OPENCLAW_DIR="$(team_openclaw_state_dir)"
 AGENTS=( $(team_agent_ids) )
 
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -37,7 +37,7 @@ if [[ -z "$OPENCLAW_AUTH_CHOICE" ]]; then
   fi
 fi
 
-export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
+export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$(team_openclaw_agents_dir)}"
 export WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
 if [[ "$OPENCLAW_AUTH_CHOICE" == "openai-codex" ]]; then
   DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"

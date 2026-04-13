@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync-auth-profiles.sh — copy provider auth profiles into isolated personal agents
+# sync-auth-profiles.sh — copy provider auth profiles into isolated team agents
 
 set -euo pipefail
 
@@ -14,8 +14,8 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
-OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
-OPENCLAW_STATE_DIR="$HOME/.openclaw-${OPENCLAW_PROFILE}"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
+OPENCLAW_STATE_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")"
 OPENCLAW_AGENTS_ROOT="$OPENCLAW_STATE_DIR/agents"
 AUTH_SOURCE="${OPENCLAW_AUTH_SOURCE:-$HOME/.openclaw/agents/main/agent/auth-profiles.json}"
 

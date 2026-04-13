@@ -22,8 +22,8 @@ TELEGRAM_TIMEOUT_SECONDS="${TELEGRAM_TIMEOUT_SECONDS:-20}"
 WAIT_FOR_TOKENS="${WAIT_FOR_TOKENS:-true}"
 START_AGENTS="${START_AGENTS:-true}"
 START_ORCHESTRATOR_ONLY="${START_ORCHESTRATOR_ONLY:-false}"
-OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw-personal}"
-OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
+OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
+OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents}"
 TEAM_BOT_PREFIX="${TEAM_BOT_PREFIX:-alex}"
 WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
 AUTO_START_DELAY="${AUTO_START_DELAY:-2}"
@@ -64,8 +64,8 @@ Options:
   --env-file PATH            Path to .env (default: project/.env)
   --manager-token TOKEN      Manager bot token (or set MANAGER_BOT_TOKEN)
   --manager-username NAME    Manager bot username (or set MANAGER_BOT_USERNAME)
-  --openclaw-dir PATH        OpenClaw config dir (default: ~/.openclaw-personal)
-  --agents-dir PATH          OpenClaw agents workspaces (default: ~/openclaw-agents-personal)
+  --openclaw-dir PATH        OpenClaw config dir (default: ~/.openclaw)
+  --agents-dir PATH          OpenClaw agents workspaces (default: ~/openclaw-agents)
   --workspace-path PATH      WORKSPACE_PATH for generated configs
   --team-prefix PREFIX       Base prefix for generated bot usernames
   --no-wait                  Do not wait for managed bot creation events
