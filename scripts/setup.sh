@@ -55,14 +55,15 @@ json_string() {
 agent_list_index() {
   local agent_id="$1"
 
-  openclaw --profile "$OPENCLAW_PROFILE" config get agents.list --json 2>/dev/null | \
-    python3 - "$agent_id" <<'PY'
+  python3 - "$OPENCLAW_STATE_DIR/openclaw.json" "$agent_id" <<'PY'
 import json
 import sys
 
-agent_id = sys.argv[1]
-data = json.load(sys.stdin)
-for idx, entry in enumerate(data or []):
+config_path, agent_id = sys.argv[1], sys.argv[2]
+with open(config_path, 'r', encoding='utf-8') as fh:
+    data = json.load(fh)
+
+for idx, entry in enumerate(((data.get("agents") or {}).get("list") or [])):
     if isinstance(entry, dict) and entry.get("id") == agent_id:
         print(idx)
         raise SystemExit(0)
