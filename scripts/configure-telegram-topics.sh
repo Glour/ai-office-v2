@@ -29,7 +29,11 @@ reload_gateway_service() {
     launchctl kickstart -k "gui/$(id -u)/com.openclaw.gateway" >/dev/null 2>&1 || \
     openclaw --profile "$OPENCLAW_PROFILE" gateway start >/dev/null 2>&1 || true
   elif [ "$(uname -s)" = "Linux" ]; then
-    systemctl --user restart openclaw-gateway >/dev/null 2>&1 || \
+    local service_name="openclaw-gateway"
+    if [ "$OPENCLAW_PROFILE" != "default" ]; then
+      service_name="openclaw-gateway-${OPENCLAW_PROFILE}"
+    fi
+    systemctl --user restart "${service_name}.service" >/dev/null 2>&1 || \
     openclaw --profile "$OPENCLAW_PROFILE" gateway start >/dev/null 2>&1 || true
   else
     openclaw --profile "$OPENCLAW_PROFILE" gateway start >/dev/null 2>&1 || true
