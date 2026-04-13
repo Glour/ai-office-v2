@@ -24,7 +24,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 echo ""
-echo -e "${BOLD}🧪 Personal AI Team — Setup Wizard${NC}"
+echo -e "${BOLD}🧪 Agent Team — Setup Wizard${NC}"
 echo "========================================"
 echo ""
 echo -e "${CYAN}This wizard will configure your multi-agent system.${NC}"
@@ -98,8 +98,8 @@ echo -e "${YELLOW}── LLM Provider ──${NC}"
 echo ""
 echo "  Which LLM provider do you use?"
 echo ""
-echo "  1) Anthropic (Claude) — recommended"
-echo "  2) OpenAI (GPT-4, GPT-4o)"
+echo "  1) ChatGPT / Codex subscription — recommended"
+echo "  2) OpenAI API key"
 echo "  3) Google (Gemini)"
 echo "  4) Ollama (local models)"
 echo "  5) DeepSeek"
@@ -110,19 +110,17 @@ LLM_CHOICE="${LLM_CHOICE:-1}"
 
 case "$LLM_CHOICE" in
   1)
-    LLM_PROVIDER="anthropic"
-    MAIN_MODEL="anthropic/claude-opus-4-5"
-    AGENT_MODEL="anthropic/claude-sonnet-4-5"
-    ask ANTHROPIC_API_KEY "Anthropic API key (or 'max' for Claude Max subscription)" "" true
-    if [ "$ANTHROPIC_API_KEY" = "max" ]; then
-      ANTHROPIC_API_KEY=""
-      echo -e "  ${CYAN}Claude Max detected — no API key needed, uses built-in auth${NC}"
-    fi
+    LLM_PROVIDER="openai-codex"
+    OPENCLAW_AUTH_CHOICE="openai-codex"
+    MAIN_MODEL="openai-codex/gpt-5.4"
+    AGENT_MODEL="openai-codex/gpt-5.4"
+    echo -e "  ${CYAN}Will use subscription auth via codex login${NC}"
     ;;
   2)
     LLM_PROVIDER="openai"
-    MAIN_MODEL="openai/gpt-4o"
-    AGENT_MODEL="openai/gpt-4o"
+    OPENCLAW_AUTH_CHOICE="openai-api-key"
+    MAIN_MODEL="openai/gpt-5.4"
+    AGENT_MODEL="openai/gpt-5.4"
     ask OPENAI_API_KEY "OpenAI API key" "" true
     ;;
   3)
@@ -149,10 +147,13 @@ case "$LLM_CHOICE" in
     ;;
   6)
     LLM_PROVIDER="custom"
-    ask MAIN_MODEL "Main model (provider/model format)" "anthropic/claude-opus-4-5" true
+    ask MAIN_MODEL "Main model (provider/model format)" "openai-codex/gpt-5.4" true
     AGENT_MODEL="$MAIN_MODEL"
     ;;
 esac
+
+THINKING_DEFAULT="${THINKING_DEFAULT:-high}"
+REASONING_DEFAULT="${REASONING_DEFAULT:-on}"
 
 echo ""
 echo "  Embedding model for vector memory (semantic search)."
@@ -214,11 +215,12 @@ declare -A REPLACEMENTS=(
   ["{{GITHUB_ORG}}"]="${GITHUB_ORG:-$OWNER_USERNAME}"
   ["{{WORKSPACE_PATH}}"]="${WORKSPACE_PATH:-~/workspace/}"
   ["{{PROJECTS_PATH}}"]="${WORKSPACE_PATH:-~/workspace/}projects/"
-  ["{{MAIN_MODEL}}"]="${MAIN_MODEL:-anthropic/claude-opus-4-5}"
-  ["{{AGENT_MODEL}}"]="${AGENT_MODEL:-anthropic/claude-sonnet-4-5}"
+  ["{{MAIN_MODEL}}"]="${MAIN_MODEL:-openai-codex/gpt-5.4}"
+  ["{{AGENT_MODEL}}"]="${AGENT_MODEL:-openai-codex/gpt-5.4}"
+  ["{{THINKING_DEFAULT}}"]="${THINKING_DEFAULT:-high}"
+  ["{{REASONING_DEFAULT}}"]="${REASONING_DEFAULT:-on}"
   ["{{EMBEDDING_PROVIDER}}"]="${EMBEDDING_PROVIDER:-openai}"
   ["{{EMBEDDING_MODEL}}"]="${EMBEDDING_MODEL:-text-embedding-3-small}"
-  ["{{ANTHROPIC_API_KEY}}"]="${ANTHROPIC_API_KEY:-your-anthropic-key}"
   ["{{OPENAI_API_KEY}}"]="${OPENAI_API_KEY:-your-openai-key}"
   ["{{GOOGLE_API_KEY}}"]="${GOOGLE_API_KEY:-your-google-key}"
   ["{{DEEPSEEK_API_KEY}}"]="${DEEPSEEK_API_KEY:-your-deepseek-key}"
@@ -267,7 +269,8 @@ echo ""
 echo -e "${BOLD}Step 4/5: Installing agents and skills...${NC}"
 echo ""
 
-OPENCLAW_DIR="$HOME/.openclaw/agents"
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-personal}"
+OPENCLAW_DIR="$HOME/.openclaw-${OPENCLAW_PROFILE}/agents"
 
 AGENT_MAP=()
 for id in "${TEAM_AGENT_IDS[@]}"; do
@@ -353,14 +356,9 @@ echo "========================================"
 echo -e "${GREEN}${BOLD}Setup complete!${NC}"
 echo ""
 echo -e "Next steps:"
-echo -e "  1. Initialize OpenClaw (if first time):  ${BOLD}openclaw init${NC}"
-echo -e "  2. Start the system:                     ${BOLD}openclaw gateway start${NC}"
-echo -e "  3. Check status:                         ${BOLD}openclaw status${NC}"
-echo -e "  4. Send a message to your bot to test!"
+echo -e "  1. Finalize team setup:                  ${BOLD}bash scripts/setup.sh${NC}"
+echo -e "  2. Start the system:                     ${BOLD}bash scripts/start-team.sh${NC}"
+echo -e "  3. Check status:                         ${BOLD}openclaw --profile ${OPENCLAW_PROFILE} status${NC}"
+echo -e "  4. Run smoke test:                       ${BOLD}bash scripts/smoke-test.sh${NC}"
 echo ""
-echo -e "Guides:"
-echo -e "  First task:    ${BLUE}docs/first-task.md${NC}"
-echo -e "  Architecture:  ${BLUE}docs/architecture.md${NC}"
-echo -e "  FAQ:           ${BLUE}docs/faq.md${NC}"
-echo ""
-echo -e "🧪 ${BOLD}Say my name.${NC}"
+echo -e "Runbook: ${BLUE}README.md${NC}"

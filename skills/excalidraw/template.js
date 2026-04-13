@@ -152,15 +152,15 @@ elements.push(...createBox("gw", 50, 620, 920, 260, "#6366f1", "#0f0f23",
 
 // Agent Home
 elements.push(...createBox("ma-home", 70, 670, 270, 190, "#22c55e", "#14532d",
-  "Агент: home (семья)\n\n📁 workspace-home/\n   • IDENTITY — семейный бот\n   • MEMORY — личные дела\n   • своя история диалогов\n\n🔑 Свои API ключи\n🤖 claude-sonnet (быстрый)", 13));
+  "Агент: home (семья)\n\n📁 workspace-home/\n   • IDENTITY — семейный бот\n   • MEMORY — личные дела\n   • своя история диалогов\n\n🔑 Свои API ключи\n🤖 gpt-5.4 (быстрый)", 13));
 
 // Agent Work
 elements.push(...createBox("ma-work", 360, 670, 270, 190, "#f97316", "#7c2d12",
-  "Агент: work (рабочий)\n\n📁 workspace-work/\n   • IDENTITY — профессионал\n   • MEMORY — рабочие дела\n   • своя история диалогов\n\n🔑 Свои API ключи\n🤖 claude-sonnet (быстрый)", 13));
+  "Агент: work (рабочий)\n\n📁 workspace-work/\n   • IDENTITY — профессионал\n   • MEMORY — рабочие дела\n   • своя история диалогов\n\n🔑 Свои API ключи\n🤖 gpt-5.4 (быстрый)", 13));
 
-// Agent Opus
+// Agent Deep Work
 elements.push(...createBox("ma-opus", 650, 670, 270, 190, "#a855f7", "#581c87",
-  "Агент: opus (deep work)\n\n📁 workspace-opus/\n   • IDENTITY — аналитик\n   • MEMORY — исследования\n   • своя история диалогов\n\n🔑 Свои API ключи\n🤖 claude-opus (умный)", 13));
+  "Агент: deep-work\n\n📁 workspace-opus/\n   • IDENTITY — аналитик\n   • MEMORY — исследования\n   • своя история диалогов\n\n🔑 Свои API ключи\n🤖 gpt-5.4 (deep work)", 13));
 
 // Channels
 elements.push(...createBox("ch-wa", 70, 910, 180, 50, "#22c55e", "#166534",

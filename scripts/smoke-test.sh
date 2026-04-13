@@ -16,7 +16,7 @@ ERRORS=0
 WARNINGS=0
 
 echo ""
-echo "🧪 Personal AI Team — Smoke Test"
+echo "🧪 Agent Team — Smoke Test"
 echo "================================="
 echo ""
 

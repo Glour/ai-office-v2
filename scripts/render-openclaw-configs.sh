@@ -30,9 +30,7 @@ is_real_secret() {
 
 OPENCLAW_AUTH_CHOICE="${OPENCLAW_AUTH_CHOICE:-}"
 if [[ -z "$OPENCLAW_AUTH_CHOICE" ]]; then
-  if is_real_secret "${ANTHROPIC_API_KEY:-}"; then
-    OPENCLAW_AUTH_CHOICE="anthropic-api-key"
-  elif is_real_secret "${OPENAI_API_KEY:-}"; then
+  if is_real_secret "${OPENAI_API_KEY:-}"; then
     OPENCLAW_AUTH_CHOICE="openai-api-key"
   else
     OPENCLAW_AUTH_CHOICE="openai-codex"
@@ -42,12 +40,16 @@ fi
 export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
 export WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
 if [[ "$OPENCLAW_AUTH_CHOICE" == "openai-codex" ]]; then
-  export MAIN_MODEL="${MAIN_MODEL:-openai/gpt-5-codex}"
-  export AGENT_MODEL="${AGENT_MODEL:-openai/gpt-5-codex}"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
+elif [[ "$OPENCLAW_AUTH_CHOICE" == "openai-api-key" ]]; then
+  DEFAULT_TEAM_MODEL="openai/gpt-5.4"
 else
-  export MAIN_MODEL="${MAIN_MODEL:-anthropic/claude-opus-4-5}"
-  export AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4-5}"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
 fi
+export MAIN_MODEL="${MAIN_MODEL:-$DEFAULT_TEAM_MODEL}"
+export AGENT_MODEL="${AGENT_MODEL:-$DEFAULT_TEAM_MODEL}"
+export THINKING_DEFAULT="${THINKING_DEFAULT:-high}"
+export REASONING_DEFAULT="${REASONING_DEFAULT:-on}"
 export EMBEDDING_PROVIDER="${EMBEDDING_PROVIDER:-openai}"
 export EMBEDDING_MODEL="${EMBEDDING_MODEL:-text-embedding-3-small}"
 

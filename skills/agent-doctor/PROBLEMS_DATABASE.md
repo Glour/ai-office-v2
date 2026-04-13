@@ -72,7 +72,7 @@ jq '.memorySearch.embeddingProvider' ~/.openclaw/openclaw.json
 ```
 
 **Причина:**
-Для векторного поиска нужны embeddings от OpenAI, Gemini или Anthropic.
+Для векторного поиска нужны embeddings от OpenAI, Gemini или другого совместимого провайдера.
 
 **Решение:**
 
@@ -304,7 +304,7 @@ openclaw cron logs <cron-name>
 
 Модель:
 ```bash
-openclaw cron edit <name> --model "anthropic/claude-sonnet-4-6"
+openclaw cron edit <name> --model "openai-codex/gpt-5.4"
 ```
 
 API ключ:
@@ -405,7 +405,7 @@ jq '.defaultModel' ~/.openclaw/openclaw.json
 
 **Решение:**
 ```bash
-jq '.defaultModel = "anthropic/claude-opus-4-6"' ~/.openclaw/openclaw.json > /tmp/config.json && mv /tmp/config.json ~/.openclaw/openclaw.json
+jq '.defaultModel = "openai-codex/gpt-5.4"' ~/.openclaw/openclaw.json > /tmp/config.json && mv /tmp/config.json ~/.openclaw/openclaw.json
 ```
 
 **Риск:** Низкий  

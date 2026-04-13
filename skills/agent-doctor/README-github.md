@@ -49,7 +49,7 @@ That's it! Your agent will run comprehensive diagnostics and report findings.
 - **JSON validity** - parse openclaw.json without errors
 - **Models** - defaultModel configured, provider available
 - **Plugins** - memory-core enabled (often breaks after updates!)
-- **Auth** - API keys for OpenAI/Gemini/Anthropic
+- **Auth** - API keys for OpenAI/Gemini/compatible providers
 
 **Why it matters:** Broken config = agent won't start.
 
@@ -189,7 +189,7 @@ Set up a cron to check health every morning:
 ```bash
 openclaw cron add daily-health-check \
   --schedule "0 8 * * *" \
-  --model "anthropic/claude-sonnet-4-6" \
+  --model "openai-codex/gpt-5.4" \
   --isolated \
   --payload '{
     "kind": "agentTurn",

@@ -17,7 +17,7 @@ Thumbs.db
 node_modules/
 package-lock.json
 
-# Claude Code / Ruflo (local tools, not part of the project)
+# Local agent-tool state (not part of the project)
 .claude/
 .claude-flow/
 .swarm/
@@ -48,9 +48,9 @@ sessions/
 *.db
 *.sqlite
 
-# Memory (personal data)
-# Uncomment if you want to track memory in git:
-# !memory/.gitkeep
+# Local workspace state
+.agents/
+memory/
 
 # Personal data - not for public repo
 skills/location-helper/references/*-documents.md

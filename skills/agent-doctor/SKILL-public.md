@@ -60,7 +60,7 @@
    - similarityThreshold указан?
 
 5. **Embedding провайдер**
-   - OpenAI / Gemini / Anthropic
+   - OpenAI / Gemini / другой поддерживаемый провайдер
    - API ключ настроен?
 
 6. **Тестовый поиск**
@@ -376,7 +376,7 @@ jq '.gateway.bind = "127.0.0.1"' ~/.openclaw/openclaw.json > /tmp/config.json &&
 - lastError не пустой
 
 **Что проверить:**
-1. Модель для крона настроена? (должна быть full path, например `anthropic/claude-sonnet-4-6`)
+1. Модель для крона настроена? (должна быть full path, например `openai-codex/gpt-5.4`)
 2. API ключ провайдера на месте?
 3. Нет ли ошибок в логах крона?
 
@@ -482,7 +482,7 @@ A: Да! Создайте крон который запускается раз 
 ```bash
 openclaw cron add daily-health-check \
   --schedule "0 8 * * *" \
-  --model "anthropic/claude-sonnet-4-6" \
+  --model "openai-codex/gpt-5.4" \
   --payload '{"kind":"agentTurn","message":"Запусти диагностику agent-doctor и отправь краткий отчет"}'
 ```
 

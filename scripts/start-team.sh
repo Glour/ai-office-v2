@@ -26,9 +26,7 @@ is_real_secret() {
 
 OPENCLAW_AUTH_CHOICE="${OPENCLAW_AUTH_CHOICE:-}"
 if [ -z "$OPENCLAW_AUTH_CHOICE" ]; then
-  if is_real_secret "${ANTHROPIC_API_KEY:-}"; then
-    OPENCLAW_AUTH_CHOICE="anthropic-api-key"
-  elif is_real_secret "${OPENAI_API_KEY:-}"; then
+  if is_real_secret "${OPENAI_API_KEY:-}"; then
     OPENCLAW_AUTH_CHOICE="openai-api-key"
   else
     OPENCLAW_AUTH_CHOICE="openai-codex"
@@ -55,8 +53,8 @@ fi
 if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
   echo "ℹ️  Using OpenAI Codex subscription flow."
   echo "   If this is the first run, complete Sign in with ChatGPT during setup."
-elif grep -q '^ANTHROPIC_API_KEY=your-' "$REPO_DIR/.env" 2>/dev/null; then
-  echo "⚠️  ANTHROPIC_API_KEY is still a placeholder."
+elif [ "$OPENCLAW_AUTH_CHOICE" = "openai-api-key" ] && grep -q '^OPENAI_API_KEY=your-' "$REPO_DIR/.env" 2>/dev/null; then
+  echo "⚠️  OPENAI_API_KEY is still a placeholder."
   echo "   Gateway will start, but agent turns will fail until you set a real key."
 fi
 

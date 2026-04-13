@@ -28,9 +28,7 @@ is_real_secret() {
 
 OPENCLAW_AUTH_CHOICE="${OPENCLAW_AUTH_CHOICE:-}"
 if [ -z "$OPENCLAW_AUTH_CHOICE" ]; then
-  if is_real_secret "${ANTHROPIC_API_KEY:-}"; then
-    OPENCLAW_AUTH_CHOICE="anthropic-api-key"
-  elif is_real_secret "${OPENAI_API_KEY:-}"; then
+  if is_real_secret "${OPENAI_API_KEY:-}"; then
     OPENCLAW_AUTH_CHOICE="openai-api-key"
   else
     OPENCLAW_AUTH_CHOICE="openai-codex"
@@ -38,15 +36,44 @@ if [ -z "$OPENCLAW_AUTH_CHOICE" ]; then
 fi
 
 if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
-  MAIN_MODEL="${MAIN_MODEL:-openai/gpt-5-codex}"
-  AGENT_MODEL="${AGENT_MODEL:-openai/gpt-5-codex}"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
+elif [ "$OPENCLAW_AUTH_CHOICE" = "openai-api-key" ]; then
+  DEFAULT_TEAM_MODEL="openai/gpt-5.4"
 else
-  MAIN_MODEL="${MAIN_MODEL:-anthropic/claude-opus-4-5}"
-  AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4-5}"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
 fi
+
+MAIN_MODEL="${MAIN_MODEL:-$DEFAULT_TEAM_MODEL}"
+AGENT_MODEL="${AGENT_MODEL:-$DEFAULT_TEAM_MODEL}"
+THINKING_DEFAULT="${THINKING_DEFAULT:-high}"
+REASONING_DEFAULT="${REASONING_DEFAULT:-on}"
+
+json_string() {
+  printf '"%s"' "$1"
+}
+
+agent_list_index() {
+  local agent_id="$1"
+
+  openclaw --profile "$OPENCLAW_PROFILE" config get agents.list --json 2>/dev/null | \
+    python3 - "$agent_id" <<'PY'
+import json
+import sys
+
+agent_id = sys.argv[1]
+data = json.load(sys.stdin)
+for idx, entry in enumerate(data or []):
+    if isinstance(entry, dict) and entry.get("id") == agent_id:
+        print(idx)
+        raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
 
 echo "🧪 Personal AI Team - Setup"
 echo "=========================="
+echo ""
+echo "Model defaults: main=$MAIN_MODEL agents=$AGENT_MODEL think=$THINKING_DEFAULT reasoning=$REASONING_DEFAULT"
 echo ""
 
 # Check prerequisites
@@ -182,6 +209,25 @@ for id in "${TEAM_AGENT_IDS[@]}"; do
       --non-interactive >/dev/null
     echo "  ✓ $id registered"
   fi
+
+  idx="$(agent_list_index "$id" || true)"
+  if [ -n "$idx" ]; then
+    openclaw --profile "$OPENCLAW_PROFILE" config set \
+      "agents.list[$idx].model" \
+      "$(json_string "$model")" \
+      --strict-json >/dev/null
+    openclaw --profile "$OPENCLAW_PROFILE" config set \
+      "agents.list[$idx].thinkingDefault" \
+      "$(json_string "$THINKING_DEFAULT")" \
+      --strict-json >/dev/null
+    openclaw --profile "$OPENCLAW_PROFILE" config set \
+      "agents.list[$idx].reasoningDefault" \
+      "$(json_string "$REASONING_DEFAULT")" \
+      --strict-json >/dev/null
+    echo "  ⚙ $id defaults synced"
+  else
+    echo "  ⚠ $id defaults not synced: agent index not found in agents.list"
+  fi
 done
 
 echo ""
@@ -226,6 +272,8 @@ echo "  4. Test a turn: openclaw --profile $OPENCLAW_PROFILE agent --agent orche
 echo ""
 echo "Profile: $OPENCLAW_PROFILE"
 echo "Auth choice: $OPENCLAW_AUTH_CHOICE"
+echo "Thinking default: $THINKING_DEFAULT"
+echo "Reasoning default: $REASONING_DEFAULT"
 echo "Agent state: $OPENCLAW_AGENTS_ROOT"
 echo "Workspaces: $WORKSPACE_ROOT"
 echo ""

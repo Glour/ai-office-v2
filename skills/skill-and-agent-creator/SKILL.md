@@ -196,7 +196,7 @@ SKILL.md → SKILL-public.md → убрать личное → аудит пов
 {
   "id": "<agent-id>",
   "name": "Имя Агента",
-  "model": "anthropic/claude-sonnet-4-6",
+  "model": "openai-codex/gpt-5.4",
   "workspace": "~/.openclaw/agents/<agent-id>/agent",
   "agentDir": "~/.openclaw/agents/<agent-id>/agent",
   "memorySearch": { "enabled": true },
@@ -365,9 +365,9 @@ bash {{WORKSPACE_PATH}}scripts/sync-agent-references.sh
 3. Если оба пустые: sessions_history(sessionKey="agent:<id>:main", limit=20)
 ```
 
-**Auto Handoff (крон, каждый час)** — Sonnet субагент читает sessions_history агента и перезаписывает `memory/handoff.md` актуальным снимком: текущая тема, решения, TODO, критичный контекст. Если сессия неактивна — не трогает файл.
+**Auto Handoff (крон, каждый час)** — отдельный служебный агент читает sessions_history агента и перезаписывает `memory/handoff.md` актуальным снимком: текущая тема, решения, TODO, критичный контекст. Если сессия неактивна — не трогает файл.
 
-**Auto Diary (крон, каждые 4 часа)** — Sonnet субагент дописывает ключевые темы и решения в `memory/YYYY-MM-DD.md`. Не дублирует, только новое.
+**Auto Diary (крон, каждые 4 часа)** — отдельный служебный агент дописывает ключевые темы и решения в `memory/YYYY-MM-DD.md`. Не дублирует, только новое.
 
 **Когда добавлять:** если агент общается с владельцем >1 часа в день и теряет контекст при обрезке. Для агентов с короткими задачами — не нужно, хватит `memory/lessons.md`.
 
@@ -589,7 +589,7 @@ skills/auto-mechanic/
 
 Конфиг:
 ```json
-{ "id": "teamlead", "name": "Team Lead", "model": { "primary": "anthropic/claude-opus-4-6" },
+{ "id": "teamlead", "name": "Team Lead", "model": { "primary": "openai-codex/gpt-5.4" },
   "workspace": "~/.openclaw/agents/teamlead/agent",
   "agentDir": "~/.openclaw/agents/teamlead/agent",
   "memorySearch": { "enabled": true },
@@ -619,16 +619,16 @@ memorySearch включён - накапливает контекст между
 ### Пример 5: Специализированный агент (Кайдзен - коуч)
 
 ```json
-{ "id": "kaizen", "model": "anthropic/claude-sonnet-4-6",
+{ "id": "kaizen", "model": "openai-codex/gpt-5.4",
   "workspace": "obsidian/", "memorySearch": { "enabled": false } }
 ```
 
-Другая архитектура - живёт в Obsidian vault. Память = сам vault (daily notes, [[wikilinks]], граф). Скиллы не нужны - работает с целями и привычками. Sonnet (дешевле) - для ежедневных чекинов достаточно.
+Другая архитектура - живёт в Obsidian vault. Память = сам vault (daily notes, [[wikilinks]], граф). Скиллы не нужны - работает с целями и привычками. Для ежедневных чекинов достаточно лёгкой модели, без отдельного heavy-маршрута.
 
 ### Пример 6: Изолированный агент (Копирайтер - маска)
 
 ```json
-{ "id": "copywriter", "model": "anthropic/claude-sonnet-4-6",
+{ "id": "copywriter", "model": "openai-codex/gpt-5.4",
   "memorySearch": { "enabled": false },
   "tools": { "deny": ["gateway", "cron", "exec"] } }
 ```

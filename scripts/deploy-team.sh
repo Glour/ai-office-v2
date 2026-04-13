@@ -43,7 +43,7 @@ for arg in "$@"; do
   esac
 done
 
-echo "🚀 Personal Team Deployment"
+echo "🚀 Agent Team Deployment"
 echo "================================"
 echo "Repo:           $REPO_DIR"
 echo "Base directory: $BASE_DIR"
@@ -176,13 +176,11 @@ echo "   ┌──────────────────────�
    echo "   │  mkdir -p ${OPENCLAW_DIR}/agents/<agent>                            │"
 echo "   │  cp $BASE_DIR/<agent>/openclaw.json.example \\                  │"
    echo "   │     ${OPENCLAW_DIR}/agents/<agent>/openclaw.json                   │"
-echo "   │  # Edit: replace {{<AGENT>_TELEGRAM_BOT_TOKEN}},              │"
-echo "   │        {{OWNER_TELEGRAM_ID}}, {{ANTHROPIC_API_KEY}}, ...        │"
+echo "   │  # Edit: replace bot tokens, OWNER_TELEGRAM_ID,             │"
+echo "   │        OPENCLAW_AUTH_CHOICE / OPENAI_API_KEY, ...           │"
 echo "   └──────────────────────────────────────────────────────────────────┘"
 echo ""
 echo "3. Start agents:"
 echo "   bash $SCRIPT_DIR/start-team.sh"
-echo "   # Or start individually:"
-echo "   cd $BASE_DIR/$ORCHESTRATOR_ID && openclaw gateway start"
 echo ""
 echo "4. Verify by messaging orchestrator ($ORCHESTRATOR_ID) in Telegram: 'Hello, are you there?'"

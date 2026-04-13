@@ -2,11 +2,11 @@
   "version": 1,
   "name": "Backend",
   "model": {
-    "default": "{{AGENT_MODEL}}",
-    "thinking": "adaptive"
+    "default": "{{AGENT_MODEL}}"
   },
+  "thinkingDefault": "{{THINKING_DEFAULT}}",
+  "reasoningDefault": "{{REASONING_DEFAULT}}",
   "apiKeys": {
-    "anthropic": "{{ANTHROPIC_API_KEY}}",
     "openai": "{{OPENAI_API_KEY}}",
     "deepseek": "{{DEEPSEEK_API_KEY}}"
   },

@@ -156,7 +156,7 @@ openclaw gateway restart
 ```bash
 openclaw cron add daily-health-check \
   --schedule "0 8 * * *" \
-  --model "anthropic/claude-sonnet-4-6" \
+  --model "openai-codex/gpt-5.4" \
   --isolated \
   --payload '{
     "kind": "agentTurn",

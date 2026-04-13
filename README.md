@@ -1,23 +1,18 @@
-# Personal AI Team (Alex)
+# Agent Team
 
-Клон шаблона с 7 персональными агентами. Идентификаторы и имена задаются через один файл: `team-config.sh`.
+Репозиторий для изолированной команды OpenClaw-агентов: `orchestrator`, `frontend`, `backend`, `design`, `content`, `media`, `research`.
 
-По умолчанию идентификаторы:
-- `orchestrator`, `frontend`, `backend`, `design`, `content`, `media`, `research`
+Текущее базовое состояние:
+- профиль OpenClaw: `personal`
+- дефолтная модель: `gpt-5.4`
+- дефолтный thinking: `high`
+- дефолтный reasoning: `on`
+- межагентная маршрутизация: `sessions_send`
+- Telegram-группа и топики: опционально, но поддерживаются штатно
 
-`TEAM_AGENT_IDS` + `TEAM_AGENT_NAMES` в `team-config.sh` используются всеми управленческими скриптами:
-- `scripts/render-openclaw-configs.sh`
-- `scripts/deploy-team.sh`
-- `scripts/start-team.sh`
-- `scripts/stop-team.sh`
-- `scripts/sync-agent-references.sh`
-- `scripts/agent-usage-tracker.sh`
-- `scripts/agent-health-check.sh`
-- `scripts/smoke-test.sh`
+Идентификаторы и имена команды задаются в `team-config.sh`. Один файл управляет всеми основными скриптами и шаблонами конфигов.
 
-Переименовываешь в `team-config.sh` — ничего больше менять не нужно.
-
-## Быстрый запуск
+## Быстрый старт
 
 1. Подготовь `.env`:
 
@@ -25,45 +20,39 @@
 cp .env.example .env
 ```
 
-2. Выбери режим авторизации:
-- через подписку Codex/OpenAI: ничего не вставляй в `ANTHROPIC_API_KEY`, можно явно задать `OPENCLAW_AUTH_CHOICE=openai-codex`
-- через API key: заполни `ANTHROPIC_API_KEY` или `OPENAI_API_KEY`
-- для Telegram-режима позже добавь `OWNER_TELEGRAM_ID` и `*_TELEGRAM_BOT_TOKEN`
+2. Выбери способ авторизации:
+- `OPENCLAW_AUTH_CHOICE=openai-codex` — рекомендованный путь через `codex login`
+- `OPENCLAW_AUTH_CHOICE=openai-api-key` + `OPENAI_API_KEY=...` — прямой OpenAI API
 
-3. Разверни воркспейсы:
+3. Разверни рабочие каталоги агентов:
 
 ```bash
 bash scripts/deploy-team.sh
 ```
 
-4. Инициализируй профиль OpenClaw `personal`, разложи agent dirs и зарегистрируй всех 7 агентов:
+4. Инициализируй профиль `personal`, срендери конфиги и зарегистрируй агентов:
 
 ```bash
 bash scripts/setup.sh
 ```
 
-Что делает `setup.sh` на актуальном OpenClaw:
-- создаёт профиль `personal` через `openclaw --profile personal onboard`
-- если выбран `OPENCLAW_AUTH_CHOICE=openai-codex`, ведёт в Sign in with ChatGPT вместо требования API key
-- копирует markdown-инструкции агентов в `~/.openclaw-personal/agents/<agent>/agent`
-- рендерит agent configs
-- ставит skills оркестратору
-- регистрирует `orchestrator/frontend/backend/design/content/media/research` как isolated agents
-
-5. Запусти общий gateway для профиля:
+5. Подними общий gateway:
 
 ```bash
 bash scripts/start-team.sh
 ```
 
-6. Проверь статус:
+6. Проверь состояние:
 
 ```bash
 openclaw --profile personal status
 openclaw --profile personal agents list
+bash scripts/smoke-test.sh
 ```
 
-Если команда живёт в Telegram-топиках, добавь в `.env`:
+## Telegram-режим
+
+Если команда живёт в Telegram-группе с топиками, добавь в `.env`:
 
 ```bash
 TEAM_TELEGRAM_GROUP_ID=-100...
@@ -76,33 +65,38 @@ MEDIA_TOPIC_ID=17
 RESEARCH_TOPIC_ID=14
 ```
 
-Тогда `setup.sh` автоматически:
-- отключит общий group routing для каждого бота;
-- включит `open` только в его собственном topic;
-- синхронизирует `auth-profiles.json` в изолированные agent dirs;
-- перезапустит `personal` gateway.
-
-7. Локальный smoke test без Telegram:
+После этого примени routing:
 
 ```bash
-openclaw --profile personal agent --agent orchestrator --local --message "Привет, кто из команды должен сделать landing page?"
+bash scripts/configure-telegram-topics.sh
 ```
 
-Если используешь подписку Codex/OpenAI, а раньше входил через API key, сначала перелогинься в клиенте Codex/OpenAI и пройди subscription-based auth.
-
-8. Остановить gateway:
+Полезные команды:
 
 ```bash
-bash scripts/stop-team.sh
+bash scripts/send-team-topic.sh orchestrator "Разбей задачу между агентами"
+bash scripts/send-team-topic.sh backend "Проверь API-маршрут и логи"
 ```
 
-> Важно: на OpenClaw `2026.x` больше нельзя рассчитывать на старый сценарий `openclaw gateway start` без установленного system service.  
-> Для локального теста этот репозиторий теперь использует профиль `personal` и foreground gateway, запущенный в фоне через `scripts/start-team.sh`.
+Ожидаемая модель работы:
+- входная точка для пользователя — `orchestrator`
+- прямой запрос в конкретный топик агенту тоже допустим
+- делегирование между агентами идёт через `sessions_send`, а не через хаотичную пересылку сообщений
 
-## Архитектура общения
+## Операционный контур
 
-- По умолчанию любой запрос идёт в `orchestrator`.
-- Прямой чат с любым агентным ботом разрешён для профильной работы.
-- Межагентная маршрутизация идёт централизованно, через `sessions_send`.
+Основные скрипты:
+- `scripts/deploy-team.sh` — создаёт/обновляет workspaces агентов
+- `scripts/render-openclaw-configs.sh` — рендерит `openclaw.json` из шаблонов
+- `scripts/setup.sh` — регистрирует команду в профиле `personal`
+- `scripts/start-team.sh` — поднимает gateway
+- `scripts/stop-team.sh` — останавливает gateway
+- `scripts/configure-telegram-topics.sh` — включает topic routing
+- `scripts/send-team-topic.sh` — отправляет сообщение прямо в топик агента
+- `scripts/smoke-test.sh` — быстрый контроль репозитория и установки
 
-Для безопасности добавлен контроль циклов и дедупликация/таймауты в правилах бота.
+## Важно
+
+- Не рассчитывай на старый сценарий `openclaw gateway start` «вручную из головы» без нормального профиля и service install.
+- Не используй `openclaw gateway restart` внутри живой агентной сессии.
+- Источник истины для команды — этот репозиторий и профиль `personal`, а не разрозненные ручные правки в агентных каталогах.
