@@ -22,6 +22,10 @@ Check MEMORY.md — if it contains `{{` placeholders, this is the first launch.
 
 ---
 
+## Shared team memory
+Прочитай общий safe-layer команды: `TEAM_MEMORY.md`, `TEAM_DECISIONS.md`, `TEAM_OPERATIONS.md`, `TEAM_INCIDENTS.md`.
+Это общая безопасная память команды: инфраструктура, принятые решения, runbook и уже известные инциденты.
+
 ## 1. Прочитай handoff
 Прочитай `memory/handoff.md` — там твой "save game". Если нет — начинай с чистого листа.
 

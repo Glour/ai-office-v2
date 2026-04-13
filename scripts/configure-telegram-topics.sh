@@ -116,6 +116,33 @@ json_array_one() {
   printf '["%s"]' "$1"
 }
 
+normalize_topics_to_objects() {
+  [ -f "$PROFILE_CONFIG_PATH" ] || return 0
+  python3 - "$PROFILE_CONFIG_PATH" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = json.loads(path.read_text())
+accounts = (((data.get("channels") or {}).get("telegram") or {}).get("accounts") or {})
+changed = False
+for account in accounts.values():
+    groups = account.get("groups") or {}
+    for group in groups.values():
+        topics = group.get("topics")
+        if isinstance(topics, list):
+            group["topics"] = {
+                str(i): value
+                for i, value in enumerate(topics)
+                if value not in (None, {}, [])
+            }
+            changed = True
+if changed:
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+PY
+}
+
 build_team_route_bindings_json() {
   ROUTE_SPECS_PAYLOAD="$1" TEAM_AGENT_IDS_PAYLOAD="$2" python3 - "$PROFILE_CONFIG_PATH" "$TEAM_TELEGRAM_GROUP_ID" <<'PY'
 import json
@@ -300,7 +327,7 @@ for agent in $(team_agent_ids); do
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.streaming" \
+    "channels.telegram.accounts.${agent}.streaming.mode" \
     "$(json_string partial)" \
     --strict-json >/dev/null
 
@@ -338,32 +365,32 @@ for agent in $(team_agent_ids); do
   fi
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.groups[$TEAM_TELEGRAM_GROUP_ID].enabled" \
+    "channels.telegram.accounts.${agent}.groups[\"$TEAM_TELEGRAM_GROUP_ID\"].enabled" \
     "$(json_bool true)" \
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.groups[$TEAM_TELEGRAM_GROUP_ID].groupPolicy" \
+    "channels.telegram.accounts.${agent}.groups[\"$TEAM_TELEGRAM_GROUP_ID\"].groupPolicy" \
     "$(json_string disabled)" \
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.groups[$TEAM_TELEGRAM_GROUP_ID].requireMention" \
+    "channels.telegram.accounts.${agent}.groups[\"$TEAM_TELEGRAM_GROUP_ID\"].requireMention" \
     "$(json_bool false)" \
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.groups[$TEAM_TELEGRAM_GROUP_ID].topics[$topic_id].enabled" \
+    "channels.telegram.accounts.${agent}.groups[\"$TEAM_TELEGRAM_GROUP_ID\"].topics[\"$topic_id\"].enabled" \
     "$(json_bool true)" \
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.groups[$TEAM_TELEGRAM_GROUP_ID].topics[$topic_id].groupPolicy" \
+    "channels.telegram.accounts.${agent}.groups[\"$TEAM_TELEGRAM_GROUP_ID\"].topics[\"$topic_id\"].groupPolicy" \
     "$(json_string open)" \
     --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
-    "channels.telegram.accounts.${agent}.groups[$TEAM_TELEGRAM_GROUP_ID].topics[$topic_id].requireMention" \
+    "channels.telegram.accounts.${agent}.groups[\"$TEAM_TELEGRAM_GROUP_ID\"].topics[\"$topic_id\"].requireMention" \
     "$(json_bool false)" \
     --strict-json >/dev/null
 
@@ -377,6 +404,8 @@ if [ "$configured" -eq 0 ]; then
   echo "ℹ️  No Telegram accounts were configured. Gateway reload skipped."
   exit 0
 fi
+
+normalize_topics_to_objects
 
 echo "🔗 Syncing route bindings..."
 bindings_json="$(build_team_route_bindings_json "$route_specs" "$binding_agents")"

@@ -174,6 +174,11 @@ for pair in "${AGENT_MAP[@]}"; do
         "$template" > "$dest/$(basename "$template")"
     done
     shopt -u nullglob
+    shopt -s nullglob
+    for shared_md in "$REPO_DIR"/TEAM_*.md; do
+      cp "$shared_md" "$dest/$(basename "$shared_md")"
+    done
+    shopt -u nullglob
     echo "  ✓ $char_name → $agent_name"
   else
     echo "  ⚠ $char_name directory not found, skipping"
@@ -257,6 +262,10 @@ echo ""
 
 echo "🔐 Syncing auth profiles..."
 bash "$REPO_DIR/scripts/sync-auth-profiles.sh"
+echo ""
+
+echo "🩺 Normalizing OpenClaw config for current CLI..."
+openclaw --profile "$OPENCLAW_PROFILE" doctor --fix >/dev/null 2>&1 || true
 echo ""
 
 echo "🧵 Applying Telegram topic routing..."

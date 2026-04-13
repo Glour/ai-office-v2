@@ -23,6 +23,10 @@ Check MEMORY.md — if it contains `{{` placeholders, this is the first launch.
 
 ---
 
+## Shared team memory
+Read the team's safe shared layer: `TEAM_MEMORY.md`, `TEAM_DECISIONS.md`, `TEAM_OPERATIONS.md`, `TEAM_INCIDENTS.md`.
+This is the team's shared safe memory: infrastructure, accepted decisions, runbook, and already-known incidents.
+
 ## 1. Read handoff
 Read `memory/handoff.md` — your last save point. If missing — start fresh.
 
