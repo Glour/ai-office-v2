@@ -58,12 +58,16 @@ ORCHESTRATOR_ID="$(team_orchestrator_id)"
 for agent in "${AGENTS[@]}"; do
   AGENT_DIR="$BASE_DIR/$agent"
 
-  if [ -d "$AGENT_DIR" ] && [ "$FORCE" = false ]; then
-    echo "⚠️  $agent: directory exists, skipping (use --force to overwrite)"
-    continue
+  if [ -d "$AGENT_DIR" ]; then
+    if [ "$FORCE" = true ]; then
+      echo "📁 Rebuilding workspace for $agent..."
+    else
+      echo "📁 Ensuring workspace for $agent..."
+    fi
+  else
+    echo "📁 Creating workspace for $agent..."
   fi
 
-  echo "📁 Creating workspace for $agent..."
   mkdir -p "$AGENT_DIR"
   mkdir -p "$AGENT_DIR/memory"
   mkdir -p "$AGENT_DIR/memory/core"
@@ -74,7 +78,11 @@ for agent in "${AGENTS[@]}"; do
 
   # Copy agent markdown files to workspace root
   if [ -d "$AGENTS_DIR/$agent" ]; then
-    cp "$AGENTS_DIR/$agent/"*.md "$AGENT_DIR/" 2>/dev/null || true
+    if [ "$FORCE" = true ]; then
+      cp -f "$AGENTS_DIR/$agent/"*.md "$AGENT_DIR/" 2>/dev/null || true
+    else
+      cp -n "$AGENTS_DIR/$agent/"*.md "$AGENT_DIR/" 2>/dev/null || true
+    fi
     echo "  ✓ Copied agent files from agents/$agent/"
   else
     echo "  ⚠ No agent directory found at agents/$agent/ — skipping file copy"
@@ -91,13 +99,25 @@ for agent in "${AGENTS[@]}"; do
   [ -d "$AGENT_DIR/references" ] || mkdir -p "$AGENT_DIR/references"
 
   if [ -f "$REFS_DIR/team-constitution.md" ]; then
-    cp "$REFS_DIR/team-constitution.md" "$AGENT_DIR/references/"
+    if [ "$FORCE" = true ]; then
+      cp -f "$REFS_DIR/team-constitution.md" "$AGENT_DIR/references/"
+    else
+      cp -n "$REFS_DIR/team-constitution.md" "$AGENT_DIR/references/" 2>/dev/null || true
+    fi
   fi
 
   if [ -f "$REFS_DIR/team-board.md.example" ]; then
-    cp "$REFS_DIR/team-board.md.example" "$AGENT_DIR/references/team-board.md"
+    if [ "$FORCE" = true ]; then
+      cp -f "$REFS_DIR/team-board.md.example" "$AGENT_DIR/references/team-board.md"
+    elif [ ! -f "$AGENT_DIR/references/team-board.md" ]; then
+      cp "$REFS_DIR/team-board.md.example" "$AGENT_DIR/references/team-board.md"
+    fi
   elif [ -f "$REFS_DIR/team-board.md" ]; then
-    cp "$REFS_DIR/team-board.md" "$AGENT_DIR/references/"
+    if [ "$FORCE" = true ]; then
+      cp -f "$REFS_DIR/team-board.md" "$AGENT_DIR/references/"
+    else
+      cp -n "$REFS_DIR/team-board.md" "$AGENT_DIR/references/"
+    fi
   fi
 done
 echo "  ✓ References copied"
@@ -111,7 +131,11 @@ for agent in "${AGENTS[@]}"; do
 
   for script in "${SHARED_SCRIPTS[@]}"; do
     if [ -f "$SCRIPTS_DIR/$script" ]; then
-      cp "$SCRIPTS_DIR/$script" "$AGENT_DIR/scripts/"
+      if [ "$FORCE" = true ]; then
+        cp -f "$SCRIPTS_DIR/$script" "$AGENT_DIR/scripts/"
+      else
+        cp -n "$SCRIPTS_DIR/$script" "$AGENT_DIR/scripts/" 2>/dev/null || true
+      fi
       chmod +x "$AGENT_DIR/scripts/$script"
     fi
   done
@@ -125,7 +149,11 @@ for agent in "${AGENTS[@]}"; do
   EXAMPLE="$CONFIGS_DIR/$agent.openclaw.json.example"
 
   if [ -f "$EXAMPLE" ]; then
-    cp "$EXAMPLE" "$AGENT_DIR/openclaw.json.example"
+    if [ "$FORCE" = true ]; then
+      cp -f "$EXAMPLE" "$AGENT_DIR/openclaw.json.example"
+    else
+      cp -n "$EXAMPLE" "$AGENT_DIR/openclaw.json.example" 2>/dev/null || true
+    fi
     echo "  ✓ $agent config example copied"
   else
     echo "  ⚠ No config example found for $agent at $EXAMPLE"

@@ -110,6 +110,10 @@ echo "🧩 Rendering agent configs..."
 bash "$REPO_DIR/scripts/render-openclaw-configs.sh" "$ENV_FILE"
 echo ""
 
+echo "🏗️  Ensuring agent workspaces..."
+bash "$REPO_DIR/scripts/deploy-team.sh"
+echo ""
+
 echo "📦 Installing agents..."
 for pair in "${AGENT_MAP[@]}"; do
   char_name="${pair%%:*}"

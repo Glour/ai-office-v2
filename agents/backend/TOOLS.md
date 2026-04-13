@@ -3,6 +3,9 @@
 - Координация только с оркестратором:
   `sessions_send(sessionKey="agent:orchestrator:main", message="...", timeoutSeconds=120)`
 
+- Прямой ответ в Telegram-topic происходит автоматически только в topic-сессии Telegram.
+- Во внутренней `main`-сессии не пытайся публиковать ответ в Telegram через `sessions_send`.
+
 - У разработки backend-пути:
   - прямой доступ к коду разрешен,
   - допускается запуск сборки, тестов, миграций и проверок в workspace,

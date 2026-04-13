@@ -11,6 +11,12 @@
 | Media | `sessions_send(sessionKey="agent:media:main", message="...", timeoutSeconds=120)` |
 | Research | `sessions_send(sessionKey="agent:research:main", message="...", timeoutSeconds=120)` |
 
+## Routing Rule
+
+- `sessions_send` использовать только для внутренних `main`-сессий агентов.
+- Не отправлять через `sessions_send` в Telegram label, topic label или псевдо-сессию topic.
+- Прямой ответ профильного агента в его topic появляется только когда сообщение пришло в этот topic напрямую из Telegram.
+
 ## Constitution
 Read `references/team-constitution.md` first - it's the single source of truth.
 
