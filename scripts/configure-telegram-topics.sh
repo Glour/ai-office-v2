@@ -116,6 +116,71 @@ json_array_one() {
   printf '["%s"]' "$1"
 }
 
+build_team_route_bindings_json() {
+  ROUTE_SPECS_PAYLOAD="$1" python3 - "$PROFILE_CONFIG_PATH" "$TEAM_TELEGRAM_GROUP_ID" <<'PY'
+import json
+import os
+import sys
+
+config_path, group_id = sys.argv[1], sys.argv[2]
+route_specs = [line.strip() for line in os.environ.get("ROUTE_SPECS_PAYLOAD", "").splitlines() if line.strip()]
+
+pairs = []
+team_agents = set()
+for spec in route_specs:
+    agent_id, sep, topic_id = spec.partition(":")
+    agent_id = agent_id.strip()
+    topic_id = topic_id.strip()
+    if not sep or not agent_id or not topic_id:
+        continue
+    pairs.append((agent_id, topic_id))
+    team_agents.add(agent_id)
+
+existing = []
+try:
+    with open(config_path, "r", encoding="utf-8") as fh:
+        existing = (json.load(fh).get("bindings") or [])
+except FileNotFoundError:
+    existing = []
+
+def is_replaced_team_topic_binding(entry):
+    if not isinstance(entry, dict):
+        return False
+    if entry.get("type") != "route":
+        return False
+    agent_id = str(entry.get("agentId") or "").strip()
+    if agent_id not in team_agents:
+        return False
+    match = entry.get("match") or {}
+    if str(match.get("channel") or "").strip() != "telegram":
+        return False
+    if str(match.get("accountId") or "").strip() != agent_id:
+        return False
+    peer = match.get("peer") or {}
+    if str(peer.get("kind") or "").strip() != "group":
+        return False
+    peer_id = str(peer.get("id") or "").strip()
+    return peer_id.startswith(f"{group_id}:topic:")
+
+merged = [entry for entry in existing if not is_replaced_team_topic_binding(entry)]
+for agent_id, topic_id in pairs:
+    merged.append({
+        "type": "route",
+        "agentId": agent_id,
+        "match": {
+            "channel": "telegram",
+            "accountId": agent_id,
+            "peer": {
+                "kind": "group",
+                "id": f"{group_id}:topic:{topic_id}"
+            }
+        }
+    })
+
+print(json.dumps(merged, ensure_ascii=False))
+PY
+}
+
 if [ -z "${TEAM_TELEGRAM_GROUP_ID:-}" ]; then
   TEAM_TELEGRAM_GROUP_ID="$(detect_existing_group_id)"
   if [ -n "${TEAM_TELEGRAM_GROUP_ID:-}" ]; then
@@ -147,6 +212,7 @@ resolve_topic_id() {
 }
 
 configured=0
+route_specs=""
 
 echo "🧭 Configuring Telegram topic routing"
 echo "Profile: $OPENCLAW_PROFILE"
@@ -219,6 +285,8 @@ for agent in $(team_agent_ids); do
     "$(json_bool false)" \
     --strict-json >/dev/null
 
+  route_specs="${route_specs}${agent}:${topic_id}
+"
   echo "  ✓ $agent -> topic $topic_id"
   configured=1
 done
@@ -227,6 +295,13 @@ if [ "$configured" -eq 0 ]; then
   echo "ℹ️  No topic ids were configured. Gateway reload skipped."
   exit 0
 fi
+
+echo "🔗 Syncing route bindings..."
+bindings_json="$(build_team_route_bindings_json "$route_specs")"
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "bindings" \
+  "$bindings_json" \
+  --strict-json >/dev/null
 
 if gateway_is_running; then
   echo "🔄 Reloading gateway service to apply routing changes..."

@@ -55,15 +55,14 @@ done
 
 echo ""
 
-# 3. Check for remaining placeholders
-echo "Checking for unfilled placeholders..."
+# 3. Check placeholder templates
+echo "Checking placeholder templates..."
 PLACEHOLDER_COUNT=$(grep -r '{{' agents/ references/ --include="*.md" 2>/dev/null | grep -v '.example' | wc -l | tr -d ' ')
 if [ "$PLACEHOLDER_COUNT" -gt 0 ]; then
-  echo -e "  ${YELLOW}⚠${NC} $PLACEHOLDER_COUNT unfilled placeholders found"
-  echo "    Run: grep -rn '{{' agents/ --include='*.md' | head -10"
-  WARNINGS=$((WARNINGS + 1))
+  echo -e "  ${GREEN}✓${NC} $PLACEHOLDER_COUNT template placeholders found in source files"
+  echo "    setup.sh/deploy-team.sh render them into workspaces from .env values"
 else
-  echo -e "  ${GREEN}✓${NC} All placeholders filled"
+  echo -e "  ${GREEN}✓${NC} No template placeholders found"
 fi
 
 echo ""

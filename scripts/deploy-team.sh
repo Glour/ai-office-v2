@@ -28,6 +28,23 @@ BASE_DIR="${OPENCLAW_AGENTS_DIR:-$HOME/openclaw-agents-personal}"
 OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw-personal}"
 FORCE=false
 
+export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$BASE_DIR}"
+export WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
+export OWNER_NAME="${OWNER_NAME:-owner}"
+export OWNER_USERNAME="${OWNER_USERNAME:-owner}"
+export OWNER_TELEGRAM_ID="${OWNER_TELEGRAM_ID:-}"
+export PAID_GROUP_NAME="${PAID_GROUP_NAME:-premium-group}"
+export PAID_CHANNEL_ID="${PAID_CHANNEL_ID:-channel-id}"
+export TELEGRAM_CHANNEL="${TELEGRAM_CHANNEL:-channel}"
+export TRIBUTE_LINK_ID="${TRIBUTE_LINK_ID:-tribute}"
+export TOPIC_ORCHESTRATOR="${ORCHESTRATOR_TOPIC_ID:-orchestrator}"
+export TOPIC_FRONTEND="${FRONTEND_TOPIC_ID:-frontend}"
+export TOPIC_BACKEND="${BACKEND_TOPIC_ID:-backend}"
+export TOPIC_DESIGN="${DESIGN_TOPIC_ID:-design}"
+export TOPIC_CONTENT="${CONTENT_TOPIC_ID:-content}"
+export TOPIC_MEDIA="${MEDIA_TOPIC_ID:-media}"
+export TOPIC_RESEARCH="${RESEARCH_TOPIC_ID:-research}"
+
 # Parse args
 for arg in "$@"; do
   case $arg in
@@ -78,12 +95,16 @@ for agent in "${AGENTS[@]}"; do
 
   # Copy agent markdown files to workspace root
   if [ -d "$AGENTS_DIR/$agent" ]; then
-    if [ "$FORCE" = true ]; then
-      cp -f "$AGENTS_DIR/$agent/"*.md "$AGENT_DIR/" 2>/dev/null || true
-    else
-      cp -n "$AGENTS_DIR/$agent/"*.md "$AGENT_DIR/" 2>/dev/null || true
-    fi
-    echo "  ✓ Copied agent files from agents/$agent/"
+    shopt -s nullglob
+    for template in "$AGENTS_DIR/$agent/"*.md; do
+      target="$AGENT_DIR/$(basename "$template")"
+      if [ "$FORCE" = true ] || [ ! -f "$target" ]; then
+        perl -pe 's/\{\{([A-Z0-9_]+)\}\}/(exists $ENV{$1} ? $ENV{$1} : "")/ge' \
+          "$template" > "$target"
+      fi
+    done
+    shopt -u nullglob
+    echo "  ✓ Rendered agent files from agents/$agent/"
   else
     echo "  ⚠ No agent directory found at agents/$agent/ — skipping file copy"
   fi

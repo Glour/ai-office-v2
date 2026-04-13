@@ -48,6 +48,23 @@ AGENT_MODEL="${AGENT_MODEL:-$DEFAULT_TEAM_MODEL}"
 THINKING_DEFAULT="${THINKING_DEFAULT:-high}"
 REASONING_DEFAULT="${REASONING_DEFAULT:-on}"
 
+export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$WORKSPACE_ROOT}"
+export WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
+export OWNER_NAME="${OWNER_NAME:-owner}"
+export OWNER_USERNAME="${OWNER_USERNAME:-owner}"
+export OWNER_TELEGRAM_ID="${OWNER_TELEGRAM_ID:-}"
+export PAID_GROUP_NAME="${PAID_GROUP_NAME:-premium-group}"
+export PAID_CHANNEL_ID="${PAID_CHANNEL_ID:-channel-id}"
+export TELEGRAM_CHANNEL="${TELEGRAM_CHANNEL:-channel}"
+export TRIBUTE_LINK_ID="${TRIBUTE_LINK_ID:-tribute}"
+export TOPIC_ORCHESTRATOR="${ORCHESTRATOR_TOPIC_ID:-orchestrator}"
+export TOPIC_FRONTEND="${FRONTEND_TOPIC_ID:-frontend}"
+export TOPIC_BACKEND="${BACKEND_TOPIC_ID:-backend}"
+export TOPIC_DESIGN="${DESIGN_TOPIC_ID:-design}"
+export TOPIC_CONTENT="${CONTENT_TOPIC_ID:-content}"
+export TOPIC_MEDIA="${MEDIA_TOPIC_ID:-media}"
+export TOPIC_RESEARCH="${RESEARCH_TOPIC_ID:-research}"
+
 json_string() {
   printf '"%s"' "$1"
 }
@@ -151,7 +168,12 @@ for pair in "${AGENT_MAP[@]}"; do
   
   if [ -d "$src" ]; then
     mkdir -p "$dest"
-    cp "$src"/*.md "$dest/" 2>/dev/null || true
+    shopt -s nullglob
+    for template in "$src"/*.md; do
+      perl -pe 's/\{\{([A-Z0-9_]+)\}\}/(exists $ENV{$1} ? $ENV{$1} : "")/ge' \
+        "$template" > "$dest/$(basename "$template")"
+    done
+    shopt -u nullglob
     echo "  ✓ $char_name → $agent_name"
   else
     echo "  ⚠ $char_name directory not found, skipping"
@@ -249,13 +271,7 @@ if [ "$AGENT_COUNT" -lt "$TEAM_AGENT_COUNT" ]; then
   echo "  ⚠ Expected ${TEAM_AGENT_COUNT} agents. Check the output above for errors."
 fi
 
-# Check for remaining placeholders
-PLACEHOLDER_COUNT=$(grep -rl '{{[A-Z_]*}}' "$REPO_DIR/agents" --include="*.md" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$PLACEHOLDER_COUNT" -gt 0 ]; then
-  echo ""
-  echo "  ⚠ $PLACEHOLDER_COUNT agent files still contain {{PLACEHOLDER}} values."
-  echo "  Run the setup wizard to fill them: bash scripts/setup-wizard.sh"
-fi
+# Source placeholders in repo templates are expected and rendered into workspaces.
 
 echo ""
 echo "=========================="
