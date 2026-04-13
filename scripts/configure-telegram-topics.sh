@@ -117,16 +117,16 @@ json_array_one() {
 }
 
 build_team_route_bindings_json() {
-  ROUTE_SPECS_PAYLOAD="$1" python3 - "$PROFILE_CONFIG_PATH" "$TEAM_TELEGRAM_GROUP_ID" <<'PY'
+  ROUTE_SPECS_PAYLOAD="$1" TEAM_AGENT_IDS_PAYLOAD="$2" python3 - "$PROFILE_CONFIG_PATH" "$TEAM_TELEGRAM_GROUP_ID" <<'PY'
 import json
 import os
 import sys
 
 config_path, group_id = sys.argv[1], sys.argv[2]
 route_specs = [line.strip() for line in os.environ.get("ROUTE_SPECS_PAYLOAD", "").splitlines() if line.strip()]
+team_agents = {line.strip() for line in os.environ.get("TEAM_AGENT_IDS_PAYLOAD", "").splitlines() if line.strip()}
 
 pairs = []
-team_agents = set()
 for spec in route_specs:
     agent_id, sep, topic_id = spec.partition(":")
     agent_id = agent_id.strip()
@@ -162,7 +162,35 @@ def is_replaced_team_topic_binding(entry):
     peer_id = str(peer.get("id") or "").strip()
     return peer_id.startswith(f"{group_id}:topic:")
 
-merged = [entry for entry in existing if not is_replaced_team_topic_binding(entry)]
+def is_replaced_team_dm_binding(entry):
+    if not isinstance(entry, dict):
+        return False
+    if entry.get("type") != "route":
+        return False
+    agent_id = str(entry.get("agentId") or "").strip()
+    if agent_id not in team_agents:
+        return False
+    match = entry.get("match") or {}
+    if str(match.get("channel") or "").strip() != "telegram":
+        return False
+    if str(match.get("accountId") or "").strip() != agent_id:
+        return False
+    peer = match.get("peer")
+    return not isinstance(peer, dict)
+
+merged = [
+    entry for entry in existing
+    if not is_replaced_team_topic_binding(entry) and not is_replaced_team_dm_binding(entry)
+]
+for agent_id in sorted(team_agents):
+    merged.append({
+        "type": "route",
+        "agentId": agent_id,
+        "match": {
+            "channel": "telegram",
+            "accountId": agent_id
+        }
+    })
 for agent_id, topic_id in pairs:
     merged.append({
         "type": "route",
@@ -179,6 +207,19 @@ for agent_id, topic_id in pairs:
 
 print(json.dumps(merged, ensure_ascii=False))
 PY
+}
+
+resolve_bot_token() {
+  case "$1" in
+    orchestrator) printf '%s' "${ORCHESTRATOR_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    frontend) printf '%s' "${FRONTEND_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    backend) printf '%s' "${BACKEND_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    design) printf '%s' "${DESIGN_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    content) printf '%s' "${CONTENT_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    media) printf '%s' "${MEDIA_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    research) printf '%s' "${RESEARCH_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
+    *) printf '' ;;
+  esac
 }
 
 if [ -z "${TEAM_TELEGRAM_GROUP_ID:-}" ]; then
@@ -213,10 +254,16 @@ resolve_topic_id() {
 
 configured=0
 route_specs=""
+binding_agents=""
 
 echo "🧭 Configuring Telegram topic routing"
 echo "Profile: $OPENCLAW_PROFILE"
 echo "Group:   $TEAM_TELEGRAM_GROUP_ID"
+
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "channels.telegram.defaultAccount" \
+  "$(json_string orchestrator)" \
+  --strict-json >/dev/null
 
 openclaw --profile "$OPENCLAW_PROFILE" config set \
   "channels.telegram.groupPolicy" \
@@ -232,11 +279,40 @@ fi
 
 for agent in $(team_agent_ids); do
   topic_id="$(resolve_topic_id "$agent")"
+  bot_token="$(resolve_bot_token "$agent")"
 
-  if [ -z "$topic_id" ]; then
-    echo "  ↺ $agent: no topic id configured, skipping"
+  if [ -z "$bot_token" ]; then
+    echo "  ↺ $agent: no bot token configured, skipping account"
     continue
   fi
+
+  binding_agents="${binding_agents}${agent}
+"
+
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "channels.telegram.accounts.${agent}.botToken" \
+    "$(json_string "$bot_token")" \
+    --strict-json >/dev/null
+
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "channels.telegram.accounts.${agent}.dmPolicy" \
+    "$(json_string allowlist)" \
+    --strict-json >/dev/null
+
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "channels.telegram.accounts.${agent}.streaming" \
+    "$(json_string partial)" \
+    --strict-json >/dev/null
+
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "channels.telegram.accounts.${agent}.reactionLevel" \
+    "$(json_string minimal)" \
+    --strict-json >/dev/null
+
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "channels.telegram.accounts.${agent}.commands.nativeSkills" \
+    "$(json_bool false)" \
+    --strict-json >/dev/null
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
     "channels.telegram.accounts.${agent}.groupPolicy" \
@@ -253,6 +329,12 @@ for agent in $(team_agent_ids); do
       "channels.telegram.accounts.${agent}.groupAllowFrom" \
       "$(json_array_one "$OWNER_TELEGRAM_ID")" \
       --strict-json >/dev/null
+  fi
+
+  if [ -z "$topic_id" ]; then
+    echo "  ✓ $agent: DM account configured (topic not set)"
+    configured=1
+    continue
   fi
 
   openclaw --profile "$OPENCLAW_PROFILE" config set \
@@ -292,12 +374,12 @@ for agent in $(team_agent_ids); do
 done
 
 if [ "$configured" -eq 0 ]; then
-  echo "ℹ️  No topic ids were configured. Gateway reload skipped."
+  echo "ℹ️  No Telegram accounts were configured. Gateway reload skipped."
   exit 0
 fi
 
 echo "🔗 Syncing route bindings..."
-bindings_json="$(build_team_route_bindings_json "$route_specs")"
+bindings_json="$(build_team_route_bindings_json "$route_specs" "$binding_agents")"
 openclaw --profile "$OPENCLAW_PROFILE" config set \
   "bindings" \
   "$bindings_json" \
