@@ -1,0 +1,110 @@
+name: Deploy Team
+
+on:
+  workflow_run:
+    workflows: ["Quality Check"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: Branch to deploy
+        required: false
+        default: main
+      target_sha:
+        description: Optional exact commit SHA
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: team-deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main'
+        )
+      }}
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: 178.104.16.119
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+      WORKFLOW_RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      DISPATCH_SHA: ${{ inputs.target_sha }}
+      DISPATCH_BRANCH: ${{ inputs.target_branch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve deploy target
+        id: target
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            branch="${DISPATCH_BRANCH:-main}"
+            sha="${DISPATCH_SHA:-}"
+          else
+            branch="${WORKFLOW_RUN_BRANCH:-main}"
+            sha="${WORKFLOW_RUN_SHA:-}"
+          fi
+
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deploy secrets
+        shell: bash
+        run: |
+          if [ -z "${DEPLOY_SSH_PRIVATE_KEY:-}" ]; then
+            echo "❌ Missing secret: DEPLOY_SSH_PRIVATE_KEY"
+            exit 1
+          fi
+
+      - name: Prepare SSH
+        shell: bash
+        run: |
+          port="${DEPLOY_PORT:-22}"
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+
+          if [ -n "${DEPLOY_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          else
+            ssh-keyscan -p "$port" "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
+          fi
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Deploy over SSH
+        shell: bash
+        run: |
+          user="${DEPLOY_USER:-root}"
+          port="${DEPLOY_PORT:-22}"
+          path="${DEPLOY_PATH:-/root/home/agent-team}"
+          branch="${{ steps.target.outputs.branch }}"
+          sha="${{ steps.target.outputs.sha }}"
+
+          remote_cmd="cd '$path' && bash scripts/github-actions-deploy.sh --branch '$branch'"
+          if [ -n "$sha" ]; then
+            remote_cmd="$remote_cmd --sha '$sha'"
+          fi
+
+          ssh -i "$HOME/.ssh/id_ed25519" \
+            -p "$port" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$user@$DEPLOY_HOST" \
+            "$remote_cmd"

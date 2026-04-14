@@ -5,6 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$REPO_DIR/team-config.sh"
 
 ENV_FILE="${ENV_FILE:-$REPO_DIR/.env}"
 if [ -f "$ENV_FILE" ]; then

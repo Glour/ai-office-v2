@@ -10,7 +10,7 @@
 - Agent workspaces: `/root/home/openclaw-agents`
 - OpenClaw profile: `default`
 - Default agent: `orchestrator`
-- Agent count: `8` (`orchestrator`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`)
+- Agent count: `10` (`orchestrator`, `producer`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`, `admin`)
 
 ## Базовые проверки
 - Статус: `openclaw --profile default status --deep`
@@ -43,7 +43,7 @@
 - В команде доступны ключевые capability-группы: documents, research, content, development, automation, quality/security, diagnostics, utilities.
 - Практически важные shared skills: `deep-research-pro`, `researcher`, `systematic-debugging`, `quality-check`, `writing-plans`, `brainstorming`, `presentation`, `github-publisher`, `skill-and-agent-creator`, `healthcheck`, `weather`, `gemini`.
 - Подтверждённые live capabilities team-контура: Telegram multi-account routing, shared memory (`memory-core`), OpenAI/Codex runtime (`gpt-5.4`), cross-agent delegation через `sessions_send`, group-topic routing.
-- Живой team-контур на `178.104.16.119` сейчас подтверждён как OpenClaw `2026.4.12`, Telegram `OK`, accounts `8/8`, default model `gpt-5.4`, memory plugin active.
+- Живой team-контур на `178.104.16.119` сейчас должен подтверждаться как Telegram `OK`, accounts `10/10`, default model `gpt-5.4`, memory plugin active.
 
 ## Infra guardrails
 - Не запускать пользовательских агентов на backend-серверах.

@@ -127,6 +127,28 @@ Board-first артефакты:
 - `references/briefing-template.md` - шаблон briefing/handoff для `producer`
 - `references/team-constitution.md` - правила маршрутизации, делегирования и recovery
 
+## CI/CD автодеплой
+
+В repo есть workflow:
+- `.github/workflows/deploy.yml`
+
+Как он работает:
+- после успешного `Quality Check` на `main` запускается деплой по SSH на `178.104.16.119`
+- на сервере выполняется `bash scripts/github-actions-deploy.sh`
+- серверный скрипт делает `git fetch` + `git merge --ff-only`, затем `smoke-test`, `setup.sh`, `start-team.sh` и `post-update-check.sh`
+
+Что нужно настроить в GitHub:
+- Secret `DEPLOY_SSH_PRIVATE_KEY` — приватный SSH-ключ для доступа на сервер
+- Secret `DEPLOY_KNOWN_HOSTS` — опционально, pinned `known_hosts`; если не задан, workflow сделает `ssh-keyscan`
+- Variable `DEPLOY_USER` — опционально, по умолчанию `root`
+- Variable `DEPLOY_PORT` — опционально, по умолчанию `22`
+- Variable `DEPLOY_PATH` — опционально, по умолчанию `/root/home/agent-team`
+
+Важно:
+- серверный repo должен оставаться чистым по tracked-файлам; если на сервере появились ручные незакоммиченные правки, deploy-скрипт остановится и ничего не перетрёт
+- сервер должен хранить свой `.env` локально; CI его не передаёт и не генерирует
+- если хочешь запустить деплой руками, используй `workflow_dispatch` у `Deploy Team`
+
 ## Важно
 
 - Не рассчитывай на старый сценарий `openclaw gateway start` «вручную из головы» без нормального профиля и service install.
