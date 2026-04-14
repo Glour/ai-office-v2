@@ -38,16 +38,10 @@ EOF
 }
 
 resolve_topic_id() {
-  case "$1" in
-    orchestrator) printf '%s' "${ORCHESTRATOR_TOPIC_ID:-}" ;;
-    frontend) printf '%s' "${FRONTEND_TOPIC_ID:-}" ;;
-    backend) printf '%s' "${BACKEND_TOPIC_ID:-}" ;;
-    design) printf '%s' "${DESIGN_TOPIC_ID:-}" ;;
-    content) printf '%s' "${CONTENT_TOPIC_ID:-}" ;;
-    media) printf '%s' "${MEDIA_TOPIC_ID:-}" ;;
-    research) printf '%s' "${RESEARCH_TOPIC_ID:-}" ;;
-    *) return 1 ;;
-  esac
+  local upper_agent topic_var
+  upper_agent="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+  topic_var="${upper_agent}_TOPIC_ID"
+  printf '%s' "${!topic_var:-}"
 }
 
 if [ $# -lt 1 ]; then

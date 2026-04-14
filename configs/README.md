@@ -9,6 +9,7 @@
 | `orchestrator.openclaw.json.example` | orchestrator | `gpt-5.4` |
 | `frontend.openclaw.json.example` | frontend | `gpt-5.4` |
 | `backend.openclaw.json.example` | backend | `gpt-5.4` |
+| `tester.openclaw.json.example` | tester | `gpt-5.4` |
 | `design.openclaw.json.example` | design | `gpt-5.4` |
 | `content.openclaw.json.example` | content | `gpt-5.4` |
 | `media.openclaw.json.example` | media | `gpt-5.4` |

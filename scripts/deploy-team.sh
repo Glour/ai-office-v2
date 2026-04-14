@@ -37,13 +37,11 @@ export PAID_GROUP_NAME="${PAID_GROUP_NAME:-premium-group}"
 export PAID_CHANNEL_ID="${PAID_CHANNEL_ID:-channel-id}"
 export TELEGRAM_CHANNEL="${TELEGRAM_CHANNEL:-channel}"
 export TRIBUTE_LINK_ID="${TRIBUTE_LINK_ID:-tribute}"
-export TOPIC_ORCHESTRATOR="${ORCHESTRATOR_TOPIC_ID:-orchestrator}"
-export TOPIC_FRONTEND="${FRONTEND_TOPIC_ID:-frontend}"
-export TOPIC_BACKEND="${BACKEND_TOPIC_ID:-backend}"
-export TOPIC_DESIGN="${DESIGN_TOPIC_ID:-design}"
-export TOPIC_CONTENT="${CONTENT_TOPIC_ID:-content}"
-export TOPIC_MEDIA="${MEDIA_TOPIC_ID:-media}"
-export TOPIC_RESEARCH="${RESEARCH_TOPIC_ID:-research}"
+for agent in $(team_agent_ids); do
+  upper_agent="$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')"
+  topic_var="${upper_agent}_TOPIC_ID"
+  export "TOPIC_${upper_agent}=${!topic_var:-$agent}"
+done
 
 # Parse args
 for arg in "$@"; do

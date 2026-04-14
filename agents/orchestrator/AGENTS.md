@@ -9,7 +9,7 @@
 - собрать и вернуть итоговый ответ пользователю.
 
 ### Роутинг
-- Frontend, Backend, Design, Content, Media, Research — через `sessionKey`.
+- Frontend, Backend, Tester, Design, Content, Media, Research — через `sessionKey`.
 - `orchestrator` никогда не запускает технические задачи из своей зоны.
 
 ### Правило пересылки

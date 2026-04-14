@@ -1,6 +1,6 @@
 # Agent Team
 
-Репозиторий для изолированной команды OpenClaw-агентов: `orchestrator`, `frontend`, `backend`, `design`, `content`, `media`, `research`.
+Репозиторий для изолированной команды OpenClaw-агентов: `orchestrator`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`.
 
 Текущее базовое состояние:
 - профиль OpenClaw: `default` (`~/.openclaw`)
@@ -59,6 +59,7 @@ TEAM_TELEGRAM_GROUP_ID=-100...
 ORCHESTRATOR_TOPIC_ID=1
 FRONTEND_TOPIC_ID=13
 BACKEND_TOPIC_ID=12
+TESTER_TOPIC_ID=18
 DESIGN_TOPIC_ID=16
 CONTENT_TOPIC_ID=15
 MEDIA_TOPIC_ID=17
@@ -82,6 +83,7 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 - входная точка для пользователя — `orchestrator`
 - прямой запрос в конкретный топик агенту тоже допустим
 - делегирование между агентами идёт через `sessions_send`, а не через хаотичную пересылку сообщений
+- `tester` отвечает за repro, smoke/e2e, acceptance и внятные баг-репорты до и после фиксов
 
 ## Операционный контур
 

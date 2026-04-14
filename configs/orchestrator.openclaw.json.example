@@ -38,6 +38,10 @@
         "sessionKey": "agent:backend:main",
         "description": "Backend engineer for APIs, data model, and integrations"
       },
+      "tester": {
+        "sessionKey": "agent:tester:main",
+        "description": "QA and testing engineer for repro, smoke tests, acceptance, and bug reports"
+      },
       "design": {
         "sessionKey": "agent:design:main",
         "description": "Designer for layout, UX, prototypes, and visual direction"

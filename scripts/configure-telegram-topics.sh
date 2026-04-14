@@ -237,16 +237,10 @@ PY
 }
 
 resolve_bot_token() {
-  case "$1" in
-    orchestrator) printf '%s' "${ORCHESTRATOR_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    frontend) printf '%s' "${FRONTEND_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    backend) printf '%s' "${BACKEND_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    design) printf '%s' "${DESIGN_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    content) printf '%s' "${CONTENT_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    media) printf '%s' "${MEDIA_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    research) printf '%s' "${RESEARCH_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}" ;;
-    *) printf '' ;;
-  esac
+  local upper_agent token_var
+  upper_agent="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+  token_var="${upper_agent}_TELEGRAM_BOT_TOKEN"
+  printf '%s' "${!token_var:-${TELEGRAM_BOT_TOKEN:-}}"
 }
 
 if [ -z "${TEAM_TELEGRAM_GROUP_ID:-}" ]; then
@@ -267,16 +261,15 @@ if [ -z "${OWNER_TELEGRAM_ID:-}" ]; then
 fi
 
 resolve_topic_id() {
-  case "$1" in
-    orchestrator) printf '%s' "${ORCHESTRATOR_TOPIC_ID:-$(detect_existing_topic_id orchestrator)}" ;;
-    frontend) printf '%s' "${FRONTEND_TOPIC_ID:-$(detect_existing_topic_id frontend)}" ;;
-    backend) printf '%s' "${BACKEND_TOPIC_ID:-$(detect_existing_topic_id backend)}" ;;
-    design) printf '%s' "${DESIGN_TOPIC_ID:-$(detect_existing_topic_id design)}" ;;
-    content) printf '%s' "${CONTENT_TOPIC_ID:-$(detect_existing_topic_id content)}" ;;
-    media) printf '%s' "${MEDIA_TOPIC_ID:-$(detect_existing_topic_id media)}" ;;
-    research) printf '%s' "${RESEARCH_TOPIC_ID:-$(detect_existing_topic_id research)}" ;;
-    *) printf '' ;;
-  esac
+  local upper_agent topic_var configured
+  upper_agent="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+  topic_var="${upper_agent}_TOPIC_ID"
+  configured="${!topic_var:-}"
+  if [ -n "$configured" ]; then
+    printf '%s' "$configured"
+  else
+    detect_existing_topic_id "$1"
+  fi
 }
 
 configured=0
