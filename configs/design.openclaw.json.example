@@ -34,6 +34,10 @@
         "sessionKey": "agent:orchestrator:main",
         "description": "Boss — route, escalation, and final delivery"
       },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for briefing and board updates"
+      },
       "content": {
         "sessionKey": "agent:content:main",
         "description": "Copy alignment and product framing"

@@ -34,6 +34,10 @@
         "sessionKey": "agent:orchestrator:main",
         "description": "Boss - route, escalation, and final delivery"
       },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for board, acceptance scope, and sequencing"
+      },
       "backend": {
         "sessionKey": "agent:backend:main",
         "description": "Backend engineer for API fixes and technical root causes"
@@ -41,6 +45,10 @@
       "frontend": {
         "sessionKey": "agent:frontend:main",
         "description": "Frontend engineer for UI bugs and browser regressions"
+      },
+      "admin": {
+        "sessionKey": "agent:admin:main",
+        "description": "Admin and finance support for access, logs, spreadsheets, and audit evidence"
       }
     }
   },

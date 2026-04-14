@@ -75,13 +75,15 @@
 ```text
 agents/
 ├── orchestrator/
+├── producer/
 ├── frontend/
 ├── backend/
 ├── tester/
 ├── design/
 ├── content/
 ├── media/
-└── research/
+├── research/
+└── admin/
 ```
 
 В каждой папке агента лежат его исходные markdown-файлы.
@@ -188,6 +190,7 @@ agents/
 Сейчас команда такая:
 
 - `orchestrator` - Октавиан
+- `producer` - Темп
 - `frontend` - Лея
 - `backend` - Пульсар
 - `tester` - Калибр
@@ -195,6 +198,7 @@ agents/
 - `content` - Глас
 - `media` - Блик
 - `research` - Радар
+- `admin` - Баланс
 
 Если вы добавляете новых агентов, почти всегда начинать надо отсюда.
 
@@ -409,7 +413,9 @@ agents/
 Он уже адаптирован под production-работу.
 
 Ключевые отличия сейчас такие:
+- добавлен отдельный `producer` как coordination layer между входом и исполнителями
 - добавлен отдельный `tester`
+- добавлен отдельный `admin` под admin/finance/ops-контур
 - часть best practices reference уже встроена, но не всё оформлено как board-first workflow
 - некоторые reference-роли у нас схлопнуты в более практичные production-роли
 

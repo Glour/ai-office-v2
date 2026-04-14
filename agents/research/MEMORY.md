@@ -22,6 +22,10 @@
 - Если исследование касается team architecture, проверять не только reference-репозиторий, но и реальный live runtime команды
 - При сравнении с best practices отделять: что уже реализовано, чего не хватает, и что сознательно отличается
 
+## Контур управления
+- Если исследование входит в multi-step работу, coordination owner - `producer`.
+- Если нужен финальный user-facing ответ, верхний слой остаётся `orchestrator`.
+
 ## Shared team ops memory
 - Боевой team-контур: `178.104.16.119` (`wam-agent-volume`).
 - OpenClaw profile: `default`; state dir: `/root/.openclaw`.

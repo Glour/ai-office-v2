@@ -1,6 +1,7 @@
 # TOOLS.md - Research
 
 - Координация:
+  - `sessions_send(sessionKey="agent:producer:main", message="...", timeoutSeconds=120)`
   - `sessions_send(sessionKey="agent:orchestrator:main", message="...", timeoutSeconds=120)`
 
 - Для передачи результатов в другие направления:

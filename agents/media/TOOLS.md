@@ -1,6 +1,9 @@
 # TOOLS.md - Media
 
 - Основной канал отчета и вопросов:
+  `sessions_send(sessionKey="agent:producer:main", message="...", timeoutSeconds=120)`
+
+- User-facing escalation:
   `sessions_send(sessionKey="agent:orchestrator:main", message="...", timeoutSeconds=120)`
 
 - Если требуется бэкграунд:

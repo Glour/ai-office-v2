@@ -1,6 +1,9 @@
 # TOOLS.md - Backend
 
-- Координация только с оркестратором:
+- Координация через `producer` для multi-step и board-first задач:
+  `sessions_send(sessionKey="agent:producer:main", message="...", timeoutSeconds=120)`
+
+- Прямая эскалация в оркестратор для single-hop случаев:
   `sessions_send(sessionKey="agent:orchestrator:main", message="...", timeoutSeconds=120)`
 
 - Прямой ответ в Telegram-topic происходит автоматически только в topic-сессии Telegram.

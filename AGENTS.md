@@ -18,12 +18,15 @@
 Полная карта → `references/team-constitution.md` секция 7. Читай при задаче >2 tool calls.
 
 ### Агенты:
+- producer — Темп (board-first, briefing, coordination)
 - frontend — Лея (front, code-first)
 - backend — Пульсар
+- tester — Калибр (QA + security)
 - design — Сеть
 - content — Глас
 - media — Блик
 - research — Радар
+- admin — Баланс (admin/finance/ops docs)
 - orchestrator — Октавиан (входной слой)
 
 ### Скиллы (уведомлять: "📚 Использую скилл [название]"):

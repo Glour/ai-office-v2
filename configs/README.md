@@ -7,6 +7,7 @@
 | Файл | Агент | Модель |
 |------|-------|--------|
 | `orchestrator.openclaw.json.example` | orchestrator | `gpt-5.4` |
+| `producer.openclaw.json.example` | producer | `gpt-5.4` |
 | `frontend.openclaw.json.example` | frontend | `gpt-5.4` |
 | `backend.openclaw.json.example` | backend | `gpt-5.4` |
 | `tester.openclaw.json.example` | tester | `gpt-5.4` |
@@ -14,6 +15,7 @@
 | `content.openclaw.json.example` | content | `gpt-5.4` |
 | `media.openclaw.json.example` | media | `gpt-5.4` |
 | `research.openclaw.json.example` | research | `gpt-5.4` |
+| `admin.openclaw.json.example` | admin | `gpt-5.4` |
 
 ### Что внутри шаблонов
 
@@ -22,6 +24,7 @@
 - изоляция воркспейсов: `{{WORKSPACE_PATH}}/<agent>`
 - отключение циклов и дефолтный heartbeat
 - маршрутизация через `sessions_send`
+- board-first слой: `orchestrator` как user-facing entry, `producer` как coordination owner
 
 ## Применение
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "name": "Research",
+  "name": "Admin",
   "model": {
     "default": "{{AGENT_MODEL}}"
   },
@@ -23,7 +23,7 @@
       "telegram": {
         "enabled": true,
         "config": {
-          "botToken": "{{RESEARCH_TELEGRAM_BOT_TOKEN}}"
+          "botToken": "{{ADMIN_TELEGRAM_BOT_TOKEN}}"
         }
       }
     }
@@ -32,16 +32,32 @@
     "remoteAgents": {
       "orchestrator": {
         "sessionKey": "agent:orchestrator:main",
-        "description": "Boss — route, escalation, and final delivery"
+        "description": "User-facing owner and escalations"
       },
       "producer": {
         "sessionKey": "agent:producer:main",
-        "description": "Internal producer for research briefs, board updates, and prioritization"
+        "description": "Coordination owner for board, sequencing, and handoff"
+      },
+      "tester": {
+        "sessionKey": "agent:tester:main",
+        "description": "QA and security gate for audit evidence"
+      },
+      "backend": {
+        "sessionKey": "agent:backend:main",
+        "description": "Technical inputs for infra and system-facing admin work"
+      },
+      "content": {
+        "sessionKey": "agent:content:main",
+        "description": "Wording, documents, and report packaging"
+      },
+      "research": {
+        "sessionKey": "agent:research:main",
+        "description": "Facts, market context, and external source checks"
       }
     }
   },
   "workspace": {
-    "path": "{{WORKSPACE_PATH}}/research"
+    "path": "{{WORKSPACE_PATH}}/admin"
   },
   "heartbeat": {
     "enabled": true,

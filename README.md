@@ -1,6 +1,6 @@
 # Agent Team
 
-Репозиторий для изолированной команды OpenClaw-агентов: `orchestrator`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`.
+Репозиторий для изолированной команды OpenClaw-агентов: `orchestrator`, `producer`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`, `admin`.
 
 Текущее базовое состояние:
 - профиль OpenClaw: `default` (`~/.openclaw`)
@@ -8,7 +8,16 @@
 - дефолтный thinking: `high`
 - дефолтный reasoning: `on`
 - межагентная маршрутизация: `sessions_send`
+- operating model: `orchestrator -> producer -> specialists`
 - Telegram-группа и топики: опционально, но поддерживаются штатно
+
+Ролевая карта:
+- `orchestrator` - пользовательский вход, маршрутизация, финальная доставка
+- `producer` - board-first координация, briefing, декомпозиция, handoff между агентами
+- `frontend` / `backend` - production delivery по коду и интеграциям
+- `tester` - QA + security smoke, acceptance, воспроизведение, базовые security-checks
+- `design` / `content` / `media` / `research` - профильные продуктовые функции
+- `admin` - admin/finance/ops документы, таблицы, реестры, отчеты, контуры согласования
 
 Идентификаторы и имена команды задаются в `team-config.sh`. Один файл управляет всеми основными скриптами и шаблонами конфигов.
 
@@ -57,6 +66,7 @@ bash scripts/smoke-test.sh
 ```bash
 TEAM_TELEGRAM_GROUP_ID=-100...
 ORCHESTRATOR_TOPIC_ID=1
+PRODUCER_TOPIC_ID=11
 FRONTEND_TOPIC_ID=13
 BACKEND_TOPIC_ID=12
 TESTER_TOPIC_ID=18
@@ -64,6 +74,7 @@ DESIGN_TOPIC_ID=16
 CONTENT_TOPIC_ID=15
 MEDIA_TOPIC_ID=17
 RESEARCH_TOPIC_ID=14
+ADMIN_TOPIC_ID=19
 ```
 
 После этого примени routing:
@@ -81,9 +92,11 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 
 Ожидаемая модель работы:
 - входная точка для пользователя — `orchestrator`
+- multi-step и multi-agent задачи сначала уходят в `producer`
 - прямой запрос в конкретный топик агенту тоже допустим
 - делегирование между агентами идёт через `sessions_send`, а не через хаотичную пересылку сообщений
-- `tester` отвечает за repro, smoke/e2e, acceptance и внятные баг-репорты до и после фиксов
+- `tester` отвечает за repro, smoke/e2e, acceptance, security smoke и внятные bug reports
+- `admin` ведёт таблицы, бюджеты, документы, согласования, административные и финансовые контуры
 
 ## Как устроен repo и память
 
@@ -108,6 +121,11 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 - `scripts/configure-telegram-topics.sh` — включает topic routing
 - `scripts/send-team-topic.sh` — отправляет сообщение прямо в топик агента
 - `scripts/smoke-test.sh` — быстрый контроль репозитория и установки
+
+Board-first артефакты:
+- `references/team-board.md.example` - каноническая доска задач
+- `references/briefing-template.md` - шаблон briefing/handoff для `producer`
+- `references/team-constitution.md` - правила маршрутизации, делегирования и recovery
 
 ## Важно
 

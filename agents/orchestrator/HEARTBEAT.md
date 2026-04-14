@@ -8,7 +8,7 @@
 
 ## Checks
 
-1. **Team agents alive** — Verify `orchestrator`, `frontend`, `backend`, `design`, `content`, `media`, `research` sessions are responsive
+1. **Team agents alive** — Verify `orchestrator`, `producer`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`, `admin` sessions are responsive
 2. **Board status** — Check `references/team-board.md` for stuck tickets (ВЗЯЛ > 2h without ГОТОВО)
 3. **Cron health** — Confirm scheduled tasks ran since last heartbeat (no missed runs)
 4. **Memory hygiene** — Verify `memory/` has no stale handoff.md older than 24h

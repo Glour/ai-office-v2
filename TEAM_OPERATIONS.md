@@ -20,7 +20,7 @@
 
 ## Telegram checks
 - Если Telegram молчит, смотреть health в `status --deep` и искать `409 Conflict` в логах.
-- Проверять, что `accounts 7/7` и `Telegram OK`.
+- Проверять, что `accounts N/N` соответствует текущему составу команды из `team-config.sh`, и что `Telegram OK`.
 - После routing/config changes делать reload/restart gateway и повторную health-проверку.
 
 ## Config hygiene

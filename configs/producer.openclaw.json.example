@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "name": "Orchestrator",
+  "name": "Producer",
   "model": {
-    "default": "{{MAIN_MODEL}}"
+    "default": "{{AGENT_MODEL}}"
   },
   "thinkingDefault": "{{THINKING_DEFAULT}}",
   "reasoningDefault": "{{REASONING_DEFAULT}}",
@@ -23,53 +23,53 @@
       "telegram": {
         "enabled": true,
         "config": {
-          "botToken": "{{ORCHESTRATOR_TELEGRAM_BOT_TOKEN}}"
+          "botToken": "{{PRODUCER_TELEGRAM_BOT_TOKEN}}"
         }
       }
     }
   },
   "agents": {
     "remoteAgents": {
-      "producer": {
-        "sessionKey": "agent:producer:main",
-        "description": "Internal producer for board, briefing, decomposition, and cross-agent sequencing"
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "User-facing owner and final delivery"
       },
       "frontend": {
         "sessionKey": "agent:frontend:main",
-        "description": "Frontend developer for UI and interaction implementation"
+        "description": "Frontend implementation"
       },
       "backend": {
         "sessionKey": "agent:backend:main",
-        "description": "Backend engineer for APIs, data model, and integrations"
+        "description": "Backend implementation"
       },
       "tester": {
         "sessionKey": "agent:tester:main",
-        "description": "QA and security gate for repro, smoke tests, acceptance, and security checks"
+        "description": "QA and security gate"
       },
       "design": {
         "sessionKey": "agent:design:main",
-        "description": "Designer for layout, UX, prototypes, and visual direction"
+        "description": "UX and interface design"
       },
       "content": {
         "sessionKey": "agent:content:main",
-        "description": "Content planning, text creation, messaging, documentation"
+        "description": "Copy, docs, messaging"
       },
       "media": {
         "sessionKey": "agent:media:main",
-        "description": "Media creator for photos, video plans, and visual packages"
+        "description": "Media and asset production"
       },
       "research": {
         "sessionKey": "agent:research:main",
-        "description": "Research and competitive analysis"
+        "description": "Research and fact-check"
       },
       "admin": {
         "sessionKey": "agent:admin:main",
-        "description": "Admin and finance operations for trackers, reports, budgets, and documents"
+        "description": "Admin and finance operations"
       }
     }
   },
   "workspace": {
-    "path": "{{WORKSPACE_PATH}}/orchestrator"
+    "path": "{{WORKSPACE_PATH}}/producer"
   },
   "heartbeat": {
     "enabled": true,

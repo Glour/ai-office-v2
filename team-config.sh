@@ -4,6 +4,7 @@
 # Canonical agent ids (used in file paths, sessionKeys, workspace dirs)
 TEAM_AGENT_IDS=(
   "orchestrator"
+  "producer"
   "frontend"
   "backend"
   "tester"
@@ -11,6 +12,7 @@ TEAM_AGENT_IDS=(
   "content"
   "media"
   "research"
+  "admin"
 )
 
 TEAM_ORCHESTRATOR_ID="orchestrator"
@@ -18,6 +20,7 @@ TEAM_ORCHESTRATOR_ID="orchestrator"
 # Читаемые имена для команд и отчетов
 TEAM_AGENT_NAMES=(
   "Октавиан"
+  "Темп"
   "Лея"
   "Пульсар"
   "Калибр"
@@ -25,6 +28,7 @@ TEAM_AGENT_NAMES=(
   "Глас"
   "Блик"
   "Радар"
+  "Баланс"
 )
 
 team_agent_ids() {

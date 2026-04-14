@@ -33,6 +33,10 @@
       "orchestrator": {
         "sessionKey": "agent:orchestrator:main",
         "description": "Boss — main user-facing agent, escalations"
+      },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for briefing, sequencing, and board updates"
       }
     }
   },

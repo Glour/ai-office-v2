@@ -33,6 +33,10 @@
       "orchestrator": {
         "sessionKey": "agent:orchestrator:main",
         "description": "Boss — route, escalation, and final delivery"
+      },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for board state and technical sequencing"
       }
     }
   },

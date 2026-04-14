@@ -19,11 +19,13 @@
 - Не светить токены, auth profiles, raw env и приватные учётные данные.
 
 ## Команда agent-team
-- Состав команды: `orchestrator`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`.
-- `orchestrator` — входная точка и диспетчер. Он делегирует через `sessions_send`.
-- `tester` — repro, smoke/e2e, acceptance, баг-репорты до и после фиксов.
+- Состав команды: `orchestrator`, `producer`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`, `admin`.
+- `orchestrator` — user-facing входная точка и финальная доставка.
+- `producer` — coordination layer: board, briefing, decomposition, handoff между агентами.
+- `tester` — QA + security gate: repro, smoke/e2e, acceptance, security-checks и баг-вердикт.
+- `admin` — admin/finance/ops документы, таблицы, реестры и отчёты.
 - Если пользователь пишет прямо в topic профильного агента, отвечает сам профильный агент.
-- Если пользователь пишет оркестратору и просит делегировать, итог пользователю возвращает оркестратор.
+- Если пользователь пишет оркестратору и просит делегировать, multi-step работа идёт по схеме `orchestrator -> producer -> specialists`, а итог пользователю возвращает оркестратор.
 
 ## Главный project-context, который должен знать вся команда
 - Название продукта по умолчанию: **Vibegent**.
