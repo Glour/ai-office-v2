@@ -86,6 +86,51 @@ raise SystemExit(1)
 PY
 }
 
+sync_registered_agent_defaults() {
+  local spec_lines="$1"
+
+  AGENT_DEFAULT_SPECS="$spec_lines" python3 - "$OPENCLAW_STATE_DIR/openclaw.json" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+config_path = Path(sys.argv[1])
+if not config_path.exists():
+    raise SystemExit(0)
+
+specs = {}
+for raw_line in os.environ.get("AGENT_DEFAULT_SPECS", "").splitlines():
+    line = raw_line.strip()
+    if not line:
+        continue
+    agent_id, model, thinking, reasoning = line.split("\t")
+    specs[agent_id] = {
+        "model": model,
+        "thinkingDefault": thinking,
+        "reasoningDefault": reasoning,
+    }
+
+config = json.loads(config_path.read_text(encoding="utf-8"))
+changed = []
+for entry in (((config.get("agents") or {}).get("list") or [])):
+    if not isinstance(entry, dict):
+        continue
+    agent_id = str(entry.get("id") or "").strip()
+    desired = specs.get(agent_id)
+    if not desired:
+        continue
+    for key, value in desired.items():
+        entry[key] = value
+    changed.append(agent_id)
+
+if changed:
+    config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for agent_id in changed:
+        print(agent_id)
+PY
+}
+
 echo "🧪 Personal AI Team - Setup"
 echo "=========================="
 echo ""
@@ -218,6 +263,7 @@ echo ""
 # Register isolated agents in the active OpenClaw profile.
 echo "🧭 Registering agents in OpenClaw profile..."
 REGISTERED_AGENTS="$(openclaw --profile "$OPENCLAW_PROFILE" agents list 2>/dev/null || true)"
+AGENT_DEFAULT_SPECS=""
 for id in "${TEAM_AGENT_IDS[@]}"; do
   if [ "$id" = "$(team_orchestrator_id)" ]; then
     model="$MAIN_MODEL"
@@ -236,23 +282,16 @@ for id in "${TEAM_AGENT_IDS[@]}"; do
     echo "  ✓ $id registered"
   fi
 
-  idx="$(agent_list_index "$id" || true)"
-  if [ -n "$idx" ]; then
-    openclaw --profile "$OPENCLAW_PROFILE" config set \
-      "agents.list[$idx].model" \
-      "$(json_string "$model")" \
-      --strict-json >/dev/null
-    openclaw --profile "$OPENCLAW_PROFILE" config set \
-      "agents.list[$idx].thinkingDefault" \
-      "$(json_string "$THINKING_DEFAULT")" \
-      --strict-json >/dev/null
-    openclaw --profile "$OPENCLAW_PROFILE" config set \
-      "agents.list[$idx].reasoningDefault" \
-      "$(json_string "$REASONING_DEFAULT")" \
-      --strict-json >/dev/null
+  AGENT_DEFAULT_SPECS="${AGENT_DEFAULT_SPECS}${id}	${model}	${THINKING_DEFAULT}	${REASONING_DEFAULT}
+"
+done
+
+SYNCED_DEFAULTS="$(sync_registered_agent_defaults "$AGENT_DEFAULT_SPECS" || true)"
+for id in "${TEAM_AGENT_IDS[@]}"; do
+  if printf '%s\n' "$SYNCED_DEFAULTS" | grep -Fxq "$id"; then
     echo "  ⚙ $id defaults synced"
   else
-    echo "  ⚠ $id defaults not synced: agent index not found in agents.list"
+    echo "  ⚠ $id defaults not synced: agent entry not found in agents.list"
   fi
 done
 
