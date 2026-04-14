@@ -414,11 +414,12 @@ for agent_id in agent_ids:
         group["enabled"] = True
         group["groupPolicy"] = "disabled"
         group["requireMention"] = False
-        topics = group.setdefault("topics", {})
-        topic = topics.setdefault(str(topic_id), {})
+        group["topics"] = {}
+        topic = {}
         topic["enabled"] = True
         topic["groupPolicy"] = "open"
         topic["requireMention"] = False
+        group["topics"][str(topic_id)] = topic
         topic_routes.append((agent_id, str(topic_id)))
 
 def is_team_topic_binding(entry):

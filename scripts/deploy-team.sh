@@ -69,9 +69,39 @@ echo ""
 AGENTS=( $(team_agent_ids) )
 ORCHESTRATOR_ID="$(team_orchestrator_id)"
 
+resolve_agent_workspace_dir() {
+  local agent_id="$1"
+  local config_path
+  config_path="$(team_openclaw_state_dir)/openclaw.json"
+
+  if [ -f "$config_path" ]; then
+    python3 - "$config_path" "$agent_id" "$BASE_DIR" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+config_path, agent_id, base_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    data = json.loads(Path(config_path).read_text(encoding='utf-8'))
+except Exception:
+    print(f"{base_dir}/{agent_id}")
+    raise SystemExit(0)
+
+for entry in ((data.get("agents") or {}).get("list") or []):
+    if isinstance(entry, dict) and entry.get("id") == agent_id and entry.get("workspace"):
+        print(entry["workspace"])
+        raise SystemExit(0)
+
+print(f"{base_dir}/{agent_id}")
+PY
+  else
+    echo "$BASE_DIR/$agent_id"
+  fi
+}
+
 # ── Workspaces ──────────────────────────────────────────────────────────────
 for agent in "${AGENTS[@]}"; do
-  AGENT_DIR="$BASE_DIR/$agent"
+  AGENT_DIR="$(resolve_agent_workspace_dir "$agent")"
 
   if [ -d "$AGENT_DIR" ]; then
     if [ "$FORCE" = true ]; then
@@ -96,10 +126,8 @@ for agent in "${AGENTS[@]}"; do
     shopt -s nullglob
     for template in "$AGENTS_DIR/$agent/"*.md; do
       target="$AGENT_DIR/$(basename "$template")"
-      if [ "$FORCE" = true ] || [ ! -f "$target" ]; then
-        perl -pe 's/\{\{([A-Z0-9_]+)\}\}/(exists $ENV{$1} ? $ENV{$1} : "")/ge' \
-          "$template" > "$target"
-      fi
+      perl -pe 's/\{\{([A-Z0-9_]+)\}\}/(exists $ENV{$1} ? $ENV{$1} : "")/ge' \
+        "$template" > "$target"
     done
     shopt -u nullglob
     echo "  ✓ Rendered agent files from agents/$agent/"
