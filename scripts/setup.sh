@@ -268,6 +268,22 @@ echo "🩺 Normalizing OpenClaw config for current CLI..."
 openclaw --profile "$OPENCLAW_PROFILE" doctor --fix >/dev/null 2>&1 || true
 echo ""
 
+echo "🔗 Enabling cross-agent delegation..."
+ALLOWED_AGENTS_JSON="$(printf '%s\n' "${TEAM_AGENT_IDS[@]}" | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')"
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "tools.sessions.visibility" \
+  '"all"' \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "tools.agentToAgent.enabled" \
+  true \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "tools.agentToAgent.allow" \
+  "$ALLOWED_AGENTS_JSON" \
+  --strict-json >/dev/null 2>&1 || true
+echo ""
+
 echo "🧵 Applying Telegram topic routing..."
 bash "$REPO_DIR/scripts/configure-telegram-topics.sh"
 echo ""
