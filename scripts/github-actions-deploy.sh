@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# github-actions-deploy.sh — deploy current repo state on the remote team host
+# github-actions-deploy.sh — apply already-synced repo state on the remote team host
 
 set -euo pipefail
 
@@ -8,16 +8,14 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 BRANCH="main"
 TARGET_SHA=""
-ALLOW_DIRTY="false"
 
 usage() {
   cat <<'EOF'
-Usage: bash scripts/github-actions-deploy.sh [--branch main] [--sha <commit>] [--allow-dirty]
+Usage: bash scripts/github-actions-deploy.sh [--branch main] [--sha <commit>]
 
 Options:
   --branch NAME     Branch to deploy (default: main)
-  --sha COMMIT      Exact commit SHA to fast-forward to
-  --allow-dirty     Continue even if the repo has local tracked changes
+  --sha COMMIT      Exact commit SHA for logging/traceability
 EOF
 }
 
@@ -30,10 +28,6 @@ while [ "$#" -gt 0 ]; do
     --sha)
       TARGET_SHA="$2"
       shift 2
-      ;;
-    --allow-dirty)
-      ALLOW_DIRTY="true"
-      shift
       ;;
     --help|-h)
       usage
@@ -49,11 +43,6 @@ done
 
 cd "$REPO_DIR"
 
-command -v git >/dev/null 2>&1 || {
-  echo "❌ git not found"
-  exit 1
-}
-
 command -v openclaw >/dev/null 2>&1 || {
   echo "❌ openclaw not found"
   exit 1
@@ -65,10 +54,9 @@ if [ ! -f "$REPO_DIR/.env" ]; then
   exit 1
 fi
 
-if [ "$ALLOW_DIRTY" != "true" ] && [ -n "$(git status --porcelain)" ]; then
-  echo "❌ Refusing to deploy: repo has local tracked changes."
-  echo "   Commit/stash them on the server first, or rerun with --allow-dirty if you really want that behavior."
-  git status --short
+if [ ! -f "$REPO_DIR/team-config.sh" ] || [ ! -f "$REPO_DIR/scripts/setup.sh" ]; then
+  echo "❌ Repo payload is incomplete in $REPO_DIR"
+  echo "   CI deploy expects the workflow to sync the repository contents to the server first."
   exit 1
 fi
 
@@ -81,17 +69,8 @@ if [ -n "$TARGET_SHA" ]; then
 fi
 echo ""
 
-git fetch origin --prune
-git checkout "$BRANCH" >/dev/null 2>&1 || git checkout -b "$BRANCH" "origin/$BRANCH"
-
 if [ -n "$TARGET_SHA" ]; then
-  git cat-file -e "${TARGET_SHA}^{commit}" 2>/dev/null || {
-    echo "❌ Commit $TARGET_SHA is not available after fetch"
-    exit 1
-  }
-  git merge --ff-only "$TARGET_SHA"
-else
-  git pull --ff-only origin "$BRANCH"
+  printf '%s\n' "$TARGET_SHA" > "$REPO_DIR/.github-actions-last-deploy"
 fi
 
 echo ""
@@ -111,5 +90,8 @@ echo "🔎 Post-deploy validation"
 bash scripts/post-update-check.sh
 
 echo ""
-echo "✅ Deploy complete: $(git rev-parse HEAD)"
-
+if [ -n "$TARGET_SHA" ]; then
+  echo "✅ Deploy complete: $TARGET_SHA"
+else
+  echo "✅ Deploy complete"
+fi

@@ -134,8 +134,9 @@ Board-first артефакты:
 
 Как он работает:
 - после успешного `Quality Check` на `main` запускается деплой по SSH на `178.104.16.119`
+- workflow синхронизирует содержимое repo на сервер по SSH/`rsync`, не трогая серверный `.env` и `auth-profiles.json`
 - на сервере выполняется `bash scripts/github-actions-deploy.sh`
-- серверный скрипт делает `git fetch` + `git merge --ff-only`, затем `smoke-test`, `setup.sh`, `start-team.sh` и `post-update-check.sh`
+- серверный скрипт затем делает `smoke-test`, `setup.sh`, `start-team.sh` и `post-update-check.sh`
 
 Что нужно настроить в GitHub:
 - Secret `DEPLOY_SSH_PRIVATE_KEY` — приватный SSH-ключ для доступа на сервер
@@ -145,8 +146,9 @@ Board-first артефакты:
 - Variable `DEPLOY_PATH` — опционально, по умолчанию `/root/home/agent-team`
 
 Важно:
-- серверный repo должен оставаться чистым по tracked-файлам; если на сервере появились ручные незакоммиченные правки, deploy-скрипт остановится и ничего не перетрёт
+- сервер не обязан быть git clone; deploy идёт как sync repo payload -> apply runtime
 - сервер должен хранить свой `.env` локально; CI его не передаёт и не генерирует
+- workflow не трогает серверные `.env` и `auth-profiles.json`
 - если хочешь запустить деплой руками, используй `workflow_dispatch` у `Deploy Team`
 
 ## Важно

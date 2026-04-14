@@ -88,6 +88,27 @@ jobs:
           fi
           chmod 644 "$HOME/.ssh/known_hosts"
 
+      - name: Sync repo to server
+        shell: bash
+        run: |
+          user="${DEPLOY_USER:-root}"
+          port="${DEPLOY_PORT:-22}"
+          path="${DEPLOY_PATH:-/root/home/agent-team}"
+          ssh -i "$HOME/.ssh/id_ed25519" \
+            -p "$port" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$user@$DEPLOY_HOST" \
+            "mkdir -p '$path'"
+
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.env' \
+            --exclude 'auth-profiles.json' \
+            -e "ssh -i $HOME/.ssh/id_ed25519 -p $port -o BatchMode=yes -o StrictHostKeyChecking=yes" \
+            ./ "$user@$DEPLOY_HOST:$path/"
+
       - name: Deploy over SSH
         shell: bash
         run: |
