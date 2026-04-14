@@ -85,6 +85,18 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 - делегирование между агентами идёт через `sessions_send`, а не через хаотичную пересылку сообщений
 - `tester` отвечает за repro, smoke/e2e, acceptance и внятные баг-репорты до и после фиксов
 
+## Как устроен repo и память
+
+Если хотите понять, что лежит в repo, что живёт только в runtime, где общая память команды и как её переносить руками, читайте:
+
+- `docs/repository-structure-and-memory.md`
+
+Коротко:
+- `TEAM_*.md` — общий safe-layer памяти команды
+- `agents/*/MEMORY.md` — роль-специфичная память
+- `~/.openclaw/agents/*` и `/root/home/openclaw-agents/*` — live установленная команда
+- `sessions/` и runtime state не являются автоматически git-источником истины
+
 ## Операционный контур
 
 Основные скрипты:

@@ -25,3 +25,16 @@
 - Команде можно давать только operational/project memory.
 - Нельзя раздавать `SOUL.md`, чувствительные части `USER.md`, токены, auth profiles, raw env, chat ids и сырую личную память.
 - Общий safe-layer команды хранить в `TEAM_*.md` файлах внутри agent workspaces.
+- Source-of-truth для общей памяти команды — repo-layer `TEAM_*.md`, а не raw session history.
+- Личную память переносить в команду только после sanitization и раскладывания по слоям: shared team memory, role-specific memory, live runtime memory.
+
+## Repo and rollout policy
+- Repo `/root/home/agent-team` считается главным местом для ручной правки общей памяти, ролей, skills и operational docs.
+- После изменения общей памяти или role memory нужно прогонять `bash scripts/setup.sh`, чтобы curated слой гарантированно доехал в live agent dirs.
+- `TEAM_*.md` — общий контекст для всех агентов, `agents/<agent>/MEMORY.md` — роль-специфичный контекст.
+- Не пытаться использовать сырые `sessions/` как основной knowledge-base команды: это шумный runtime-слой, а не curated memory.
+
+## Skills and capabilities
+- Общая библиотека skills хранится в `skills/` внутри repo и считается shared capability layer для всей команды.
+- Самые важные capability-кластеры команды: research, docs, content, automation, quality/security, planning, browser/web work.
+- При расширении команды сначала переносить знания в curated memory и skills layer, а уже потом добавлять новых агентов, иначе новые роли будут такими же "пустыми" по контексту.
