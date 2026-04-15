@@ -400,7 +400,7 @@ for agent_id in agent_ids:
     account["dmPolicy"] = "allowlist"
     account["groupPolicy"] = "allowlist"
     account["reactionLevel"] = "minimal"
-    account["streaming"] = {"mode": "partial"}
+    account["streaming"] = {"mode": "off"}
     account["commands"] = {"nativeSkills": False}
     if owner_id:
         account["allowFrom"] = [owner_id]
