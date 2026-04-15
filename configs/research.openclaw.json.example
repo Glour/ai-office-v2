@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "name": "Research",
+  "model": {
+    "default": "{{AGENT_MODEL}}"
+  },
+  "thinkingDefault": "{{THINKING_DEFAULT}}",
+  "reasoningDefault": "{{REASONING_DEFAULT}}",
+  "apiKeys": {
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{RESEARCH_TELEGRAM_BOT_TOKEN}}"
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "Boss — route, escalation, and final delivery"
+      },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for research briefs, board updates, and prioritization"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/research"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}

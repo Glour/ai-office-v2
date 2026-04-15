@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "name": "Producer",
+  "model": {
+    "default": "{{AGENT_MODEL}}"
+  },
+  "thinkingDefault": "{{THINKING_DEFAULT}}",
+  "reasoningDefault": "{{REASONING_DEFAULT}}",
+  "apiKeys": {
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{PRODUCER_TELEGRAM_BOT_TOKEN}}"
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "User-facing owner and final delivery"
+      },
+      "frontend": {
+        "sessionKey": "agent:frontend:main",
+        "description": "Frontend implementation"
+      },
+      "backend": {
+        "sessionKey": "agent:backend:main",
+        "description": "Backend implementation"
+      },
+      "tester": {
+        "sessionKey": "agent:tester:main",
+        "description": "QA and security gate"
+      },
+      "design": {
+        "sessionKey": "agent:design:main",
+        "description": "UX and interface design"
+      },
+      "content": {
+        "sessionKey": "agent:content:main",
+        "description": "Copy, docs, messaging"
+      },
+      "media": {
+        "sessionKey": "agent:media:main",
+        "description": "Media and asset production"
+      },
+      "research": {
+        "sessionKey": "agent:research:main",
+        "description": "Research and fact-check"
+      },
+      "admin": {
+        "sessionKey": "agent:admin:main",
+        "description": "Admin and finance operations"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/producer"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}

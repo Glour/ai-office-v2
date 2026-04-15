@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "name": "Tester",
+  "model": {
+    "default": "{{AGENT_MODEL}}"
+  },
+  "thinkingDefault": "{{THINKING_DEFAULT}}",
+  "reasoningDefault": "{{REASONING_DEFAULT}}",
+  "apiKeys": {
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{TESTER_TELEGRAM_BOT_TOKEN}}"
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "Boss - route, escalation, and final delivery"
+      },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for board, acceptance scope, and sequencing"
+      },
+      "backend": {
+        "sessionKey": "agent:backend:main",
+        "description": "Backend engineer for API fixes and technical root causes"
+      },
+      "frontend": {
+        "sessionKey": "agent:frontend:main",
+        "description": "Frontend engineer for UI bugs and browser regressions"
+      },
+      "admin": {
+        "sessionKey": "agent:admin:main",
+        "description": "Admin and finance support for access, logs, spreadsheets, and audit evidence"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/tester"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}

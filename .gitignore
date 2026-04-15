@@ -1,0 +1,64 @@
+# Environment
+.env
+.env.local
+
+# Auth files
+auth.json
+auth-profiles.json
+models.json
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+.idea/
+
+# Node
+node_modules/
+package-lock.json
+
+# Local agent-tool state (not part of the project)
+.claude/
+.claude-flow/
+.swarm/
+.mcp.json
+CLAUDE.md
+CAPABILITIES.md
+
+# Depersonalization script (contains PII-to-placeholder mapping)
+scripts/depersonalize.sh
+
+# Build artifacts
+**/bin/
+**/obj/
+**/dist/
+**/.vs/
+*.dll
+*.exe
+*.nupkg
+
+# Logs
+*.log
+logs/
+
+# Sessions
+sessions/
+
+# Database files
+*.db
+*.sqlite
+
+# Local workspace state
+.agents/
+memory/
+
+# Personal data - not for public repo
+skills/location-helper/references/*-documents.md
+skills/family-doctor/references/family-health-profile.md
+skills/family-doctor/data/family-health-profile.md
+skills/astrologer/references/astro-profiles.md
+skills/psychologist/data/psychology-profile.md
+skills/psychologist/data/*-psychology-profile.md
+skills/business-architect/data/psychology-profile.md
+skills/auto-mechanic/data/vehicle-profile.md
+skills/auto-mechanic/data/service-history.md

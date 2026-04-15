@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "name": "Backend",
+  "model": {
+    "default": "{{AGENT_MODEL}}"
+  },
+  "thinkingDefault": "{{THINKING_DEFAULT}}",
+  "reasoningDefault": "{{REASONING_DEFAULT}}",
+  "apiKeys": {
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{BACKEND_TELEGRAM_BOT_TOKEN}}"
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "Boss — route, escalation, and final delivery"
+      },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Internal producer for board state and technical sequencing"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/backend"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}
