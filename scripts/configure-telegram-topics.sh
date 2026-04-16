@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# configure-telegram-topics.sh — restrict each team bot to its own Telegram topic
+# configure-telegram-topics.sh — bind each bot to its Telegram topic with safer defaults
 
 set -euo pipefail
 
@@ -18,6 +18,26 @@ OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
 TEAM_TELEGRAM_GROUP_ID="${TEAM_TELEGRAM_GROUP_ID:-${TELEGRAM_TEAM_GROUP_ID:-}}"
 OWNER_TELEGRAM_ID="${OWNER_TELEGRAM_ID:-}"
 PROFILE_CONFIG_PATH="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")/openclaw.json"
+
+normalize_bool() {
+  case "$(printf '%s' "${1:-false}" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes|on)
+      printf 'true'
+      ;;
+    *)
+      printf 'false'
+      ;;
+  esac
+}
+
+is_real_secret() {
+  local value="${1:-}"
+  [[ -n "$value" ]] || return 1
+  [[ "$value" != your-* ]] || return 1
+  [[ "$value" != *placeholder* ]] || return 1
+  [[ "$value" != *changeme* ]] || return 1
+  return 0
+}
 
 gateway_is_running() {
   openclaw --profile "$OPENCLAW_PROFILE" gateway status 2>/dev/null | grep -q 'RPC probe: ok'
@@ -43,10 +63,12 @@ reload_gateway_service() {
 detect_existing_group_id() {
   [ -f "$PROFILE_CONFIG_PATH" ] || return 0
   python3 - "$PROFILE_CONFIG_PATH" <<'PY'
-import json, sys
-path = sys.argv[1]
-with open(path) as fh:
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as fh:
     data = json.load(fh)
+
 accounts = (((data.get("channels") or {}).get("telegram") or {}).get("accounts") or {})
 for account in accounts.values():
     groups = account.get("groups") or {}
@@ -59,11 +81,13 @@ PY
 detect_existing_topic_id() {
   [ -f "$PROFILE_CONFIG_PATH" ] || return 0
   python3 - "$PROFILE_CONFIG_PATH" "$1" <<'PY'
-import json, sys
-path, agent = sys.argv[1], sys.argv[2]
-with open(path) as fh:
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as fh:
     data = json.load(fh)
-account = ((((data.get("channels") or {}).get("telegram") or {}).get("accounts") or {}).get(agent) or {})
+
+account = ((((data.get("channels") or {}).get("telegram") or {}).get("accounts") or {}).get(sys.argv[2]) or {})
 groups = account.get("groups") or {}
 for group in groups.values():
     topics = group.get("topics") or {}
@@ -74,173 +98,85 @@ PY
 }
 
 detect_existing_owner_telegram_id() {
-  python3 - "$OPENCLAW_PROFILE" <<'PY'
-import glob, json, os, sys
-profile = sys.argv[1]
-
-profile_config = os.path.expanduser(f'~/.openclaw-{profile}/openclaw.json')
-if os.path.exists(profile_config):
-    with open(profile_config) as fh:
-        data = json.load(fh)
-    tg = ((data.get("channels") or {}).get("telegram") or {})
-    for key in ("groupAllowFrom", "allowFrom"):
-        values = tg.get(key) or []
-        if values:
-            print(values[0])
-            raise SystemExit(0)
-
-for path in sorted(glob.glob(os.path.expanduser(f'~/.openclaw-{profile}/agents/*/openclaw.json'))):
-    with open(path) as fh:
-        data = json.load(fh)
-    cfg = ((((data.get("plugins") or {}).get("entries") or {}).get("telegram") or {}).get("config") or {})
-    values = cfg.get("authorizedSenders") or []
-    if values:
-        print(values[0])
-        raise SystemExit(0)
-PY
-}
-
-json_bool() {
-  if [ "$1" = "true" ]; then
-    printf 'true'
-  else
-    printf 'false'
-  fi
-}
-
-json_string() {
-  printf '"%s"' "$1"
-}
-
-json_array_one() {
-  printf '["%s"]' "$1"
-}
-
-normalize_topics_to_objects() {
-  [ -f "$PROFILE_CONFIG_PATH" ] || return 0
   python3 - "$PROFILE_CONFIG_PATH" <<'PY'
 import json
 import sys
 from pathlib import Path
 
-path = Path(sys.argv[1])
-data = json.loads(path.read_text())
-accounts = (((data.get("channels") or {}).get("telegram") or {}).get("accounts") or {})
-changed = False
-for account in accounts.values():
-    groups = account.get("groups") or {}
-    for group in groups.values():
-        topics = group.get("topics")
-        if isinstance(topics, list):
-            group["topics"] = {
-                str(i): value
-                for i, value in enumerate(topics)
-                if value not in (None, {}, [])
-            }
-            changed = True
-if changed:
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+path = Path(sys.argv[1]).expanduser()
+if not path.exists():
+    raise SystemExit(0)
+
+data = json.loads(path.read_text(encoding="utf-8"))
+telegram = ((data.get("channels") or {}).get("telegram") or {})
+for key in ("groupAllowFrom", "allowFrom"):
+    values = telegram.get(key) or []
+    if values:
+        print(values[0])
+        raise SystemExit(0)
+
+for account in ((telegram.get("accounts") or {}).values()):
+    for key in ("groupAllowFrom", "allowFrom"):
+        values = account.get(key) or []
+        if values:
+            print(values[0])
+            raise SystemExit(0)
 PY
 }
 
-build_team_route_bindings_json() {
-  ROUTE_SPECS_PAYLOAD="$1" TEAM_AGENT_IDS_PAYLOAD="$2" python3 - "$PROFILE_CONFIG_PATH" "$TEAM_TELEGRAM_GROUP_ID" <<'PY'
+detect_existing_bot_token() {
+  [ -f "$PROFILE_CONFIG_PATH" ] || return 0
+  python3 - "$PROFILE_CONFIG_PATH" "$1" <<'PY'
 import json
-import os
 import sys
 
-config_path, group_id = sys.argv[1], sys.argv[2]
-route_specs = [line.strip() for line in os.environ.get("ROUTE_SPECS_PAYLOAD", "").splitlines() if line.strip()]
-team_agents = {line.strip() for line in os.environ.get("TEAM_AGENT_IDS_PAYLOAD", "").splitlines() if line.strip()}
+with open(sys.argv[1], encoding="utf-8") as fh:
+    data = json.load(fh)
 
-pairs = []
-for spec in route_specs:
-    agent_id, sep, topic_id = spec.partition(":")
-    agent_id = agent_id.strip()
-    topic_id = topic_id.strip()
-    if not sep or not agent_id or not topic_id:
-        continue
-    pairs.append((agent_id, topic_id))
-    team_agents.add(agent_id)
-
-existing = []
-try:
-    with open(config_path, "r", encoding="utf-8") as fh:
-        existing = (json.load(fh).get("bindings") or [])
-except FileNotFoundError:
-    existing = []
-
-def is_replaced_team_topic_binding(entry):
-    if not isinstance(entry, dict):
-        return False
-    if entry.get("type") != "route":
-        return False
-    agent_id = str(entry.get("agentId") or "").strip()
-    if agent_id not in team_agents:
-        return False
-    match = entry.get("match") or {}
-    if str(match.get("channel") or "").strip() != "telegram":
-        return False
-    if str(match.get("accountId") or "").strip() != agent_id:
-        return False
-    peer = match.get("peer") or {}
-    if str(peer.get("kind") or "").strip() != "group":
-        return False
-    peer_id = str(peer.get("id") or "").strip()
-    return peer_id.startswith(f"{group_id}:topic:")
-
-def is_replaced_team_dm_binding(entry):
-    if not isinstance(entry, dict):
-        return False
-    if entry.get("type") != "route":
-        return False
-    agent_id = str(entry.get("agentId") or "").strip()
-    if agent_id not in team_agents:
-        return False
-    match = entry.get("match") or {}
-    if str(match.get("channel") or "").strip() != "telegram":
-        return False
-    if str(match.get("accountId") or "").strip() != agent_id:
-        return False
-    peer = match.get("peer")
-    return not isinstance(peer, dict)
-
-merged = [
-    entry for entry in existing
-    if not is_replaced_team_topic_binding(entry) and not is_replaced_team_dm_binding(entry)
-]
-for agent_id in sorted(team_agents):
-    merged.append({
-        "type": "route",
-        "agentId": agent_id,
-        "match": {
-            "channel": "telegram",
-            "accountId": agent_id
-        }
-    })
-for agent_id, topic_id in pairs:
-    merged.append({
-        "type": "route",
-        "agentId": agent_id,
-        "match": {
-            "channel": "telegram",
-            "accountId": agent_id,
-            "peer": {
-                "kind": "group",
-                "id": f"{group_id}:topic:{topic_id}"
-            }
-        }
-    })
-
-print(json.dumps(merged, ensure_ascii=False))
+account = ((((data.get("channels") or {}).get("telegram") or {}).get("accounts") or {}).get(sys.argv[2]) or {})
+value = account.get("botToken")
+if isinstance(value, str) and value.strip():
+    print(value.strip())
 PY
 }
 
 resolve_bot_token() {
-  local upper_agent token_var
-  upper_agent="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+  local agent_id="$1"
+  local upper_agent token_var token
+  upper_agent="$(printf '%s' "$agent_id" | tr '[:lower:]' '[:upper:]')"
   token_var="${upper_agent}_TELEGRAM_BOT_TOKEN"
-  printf '%s' "${!token_var:-${TELEGRAM_BOT_TOKEN:-}}"
+  token="${!token_var:-}"
+
+  if is_real_secret "$token"; then
+    printf '%s' "$token"
+    return 0
+  fi
+
+  if [ "$(normalize_bool "${TEAM_TELEGRAM_TOKEN_FALLBACK_ALLOWED:-false}")" = "true" ] && \
+     is_real_secret "${TELEGRAM_BOT_TOKEN:-}"; then
+    printf '%s' "${TELEGRAM_BOT_TOKEN}"
+    return 0
+  fi
+
+  token="$(detect_existing_bot_token "$agent_id")"
+  if is_real_secret "$token"; then
+    printf '%s' "$token"
+    return 0
+  fi
+
+  return 1
+}
+
+resolve_topic_id() {
+  local upper_agent topic_var configured
+  upper_agent="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+  topic_var="${upper_agent}_TOPIC_ID"
+  configured="${!topic_var:-}"
+  if [ -n "$configured" ]; then
+    printf '%s' "$configured"
+  else
+    detect_existing_topic_id "$1"
+  fi
 }
 
 if [ -z "${TEAM_TELEGRAM_GROUP_ID:-}" ]; then
@@ -260,21 +196,70 @@ if [ -z "${OWNER_TELEGRAM_ID:-}" ]; then
   fi
 fi
 
-resolve_topic_id() {
-  local upper_agent topic_var configured
-  upper_agent="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
-  topic_var="${upper_agent}_TOPIC_ID"
-  configured="${!topic_var:-}"
-  if [ -n "$configured" ]; then
-    printf '%s' "$configured"
-  else
-    detect_existing_topic_id "$1"
+TEAM_TELEGRAM_DM_POLICY="${TEAM_TELEGRAM_DM_POLICY:-allowlist}"
+TEAM_TELEGRAM_GROUP_SENDER_POLICY="${TEAM_TELEGRAM_GROUP_SENDER_POLICY:-open}"
+TEAM_TELEGRAM_ALLOW_OWNER_DM="$(normalize_bool "${TEAM_TELEGRAM_ALLOW_OWNER_DM:-true}")"
+TEAM_TELEGRAM_OWNER_ONLY_GROUPS="$(normalize_bool "${TEAM_TELEGRAM_OWNER_ONLY_GROUPS:-false}")"
+TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC="$(normalize_bool "${TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC:-true}")"
+TEAM_TELEGRAM_GROUP_ALLOW_FROM="${TEAM_TELEGRAM_GROUP_ALLOW_FROM:-}"
+
+MISSING_TOKEN_AGENTS=()
+TOKEN_SPECS=""
+
+for agent in $(team_active_agent_ids); do
+  token="$(resolve_bot_token "$agent" || true)"
+  if [ -z "$token" ]; then
+    MISSING_TOKEN_AGENTS+=("$agent")
+    continue
   fi
-}
+
+  export "$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')_TELEGRAM_BOT_TOKEN=$token"
+  TOKEN_SPECS="${TOKEN_SPECS}${agent}"$'\t'"${token}"$'\n'
+done
+
+DUPLICATE_TOKEN_AGENTS=()
+while IFS= read -r duplicate_entry; do
+  [ -n "$duplicate_entry" ] || continue
+  DUPLICATE_TOKEN_AGENTS+=("$duplicate_entry")
+done < <(
+  TOKEN_SPECS_PAYLOAD="$TOKEN_SPECS" python3 - <<'PY'
+import collections
+import os
+
+items = []
+for raw_line in os.environ.get("TOKEN_SPECS_PAYLOAD", "").splitlines():
+    line = raw_line.strip()
+    if not line:
+        continue
+    agent, token = line.split("\t", 1)
+    items.append((agent, token))
+
+owners = collections.defaultdict(list)
+for agent, token in items:
+    owners[token].append(agent)
+
+for token, agents in owners.items():
+    if len(agents) > 1:
+        print(", ".join(agents))
+PY
+)
+
+if [ "${#MISSING_TOKEN_AGENTS[@]}" -gt 0 ] || [ "${#DUPLICATE_TOKEN_AGENTS[@]}" -gt 0 ]; then
+  echo "❌ Telegram topic routing was not applied."
+  for agent in "${MISSING_TOKEN_AGENTS[@]}"; do
+    echo "  - missing token: $agent"
+  done
+  for item in "${DUPLICATE_TOKEN_AGENTS[@]}"; do
+    echo "  - duplicate token: $item"
+  done
+  exit 1
+fi
 
 echo "🧭 Configuring Telegram topic routing"
 echo "Profile: $OPENCLAW_PROFILE"
 echo "Group:   $TEAM_TELEGRAM_GROUP_ID"
+echo "DM policy: $TEAM_TELEGRAM_DM_POLICY"
+echo "Group sender policy: $TEAM_TELEGRAM_GROUP_SENDER_POLICY"
 
 TEAM_AGENT_IDS_PAYLOAD="$(team_active_agent_ids)"
 SUMMARY_PATH="$(mktemp)"
@@ -284,6 +269,12 @@ TEAM_TELEGRAM_GROUP_ID="$TEAM_TELEGRAM_GROUP_ID" \
 OWNER_TELEGRAM_ID="${OWNER_TELEGRAM_ID:-}" \
 PROFILE_CONFIG_PATH="$PROFILE_CONFIG_PATH" \
 SUMMARY_PATH="$SUMMARY_PATH" \
+TEAM_TELEGRAM_DM_POLICY="$TEAM_TELEGRAM_DM_POLICY" \
+TEAM_TELEGRAM_GROUP_SENDER_POLICY="$TEAM_TELEGRAM_GROUP_SENDER_POLICY" \
+TEAM_TELEGRAM_ALLOW_OWNER_DM="$TEAM_TELEGRAM_ALLOW_OWNER_DM" \
+TEAM_TELEGRAM_OWNER_ONLY_GROUPS="$TEAM_TELEGRAM_OWNER_ONLY_GROUPS" \
+TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC="$TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC" \
+TEAM_TELEGRAM_GROUP_ALLOW_FROM="$TEAM_TELEGRAM_GROUP_ALLOW_FROM" \
 python3 - <<'PY'
 import json
 import os
@@ -294,6 +285,17 @@ summary_path = Path(os.environ["SUMMARY_PATH"])
 group_id = os.environ["TEAM_TELEGRAM_GROUP_ID"].strip()
 owner_id = os.environ.get("OWNER_TELEGRAM_ID", "").strip()
 agent_ids = [line.strip() for line in os.environ.get("TEAM_AGENT_IDS_PAYLOAD", "").splitlines() if line.strip()]
+dm_policy = (os.environ.get("TEAM_TELEGRAM_DM_POLICY") or "allowlist").strip()
+group_sender_policy = (os.environ.get("TEAM_TELEGRAM_GROUP_SENDER_POLICY") or "open").strip()
+allow_owner_dm = os.environ.get("TEAM_TELEGRAM_ALLOW_OWNER_DM") == "true"
+owner_only_groups = os.environ.get("TEAM_TELEGRAM_OWNER_ONLY_GROUPS") == "true"
+route_dms_if_no_topic = os.environ.get("TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC") == "true"
+group_allow_from = [item.strip() for item in (os.environ.get("TEAM_TELEGRAM_GROUP_ALLOW_FROM") or "").split(",") if item.strip()]
+
+if dm_policy not in {"pairing", "allowlist", "open", "disabled"}:
+    dm_policy = "allowlist"
+if group_sender_policy not in {"open", "allowlist", "disabled"}:
+    group_sender_policy = "open"
 
 def normalize_key(value):
     if isinstance(value, str) and len(value) >= 2 and value[0] == value[-1] == '"':
@@ -347,21 +349,27 @@ def existing_bot_token(account):
     value = account.get("botToken")
     return value.strip() if isinstance(value, str) else ""
 
-def route_binding_agents(bindings):
-    result = set()
-    for entry in bindings:
-        if not isinstance(entry, dict):
-            continue
-        if entry.get("type") != "route":
-            continue
-        match = entry.get("match") or {}
-        if str(match.get("channel") or "").strip() != "telegram":
-            continue
-        agent_id = str(entry.get("agentId") or "").strip()
-        account_id = str(match.get("accountId") or "").strip()
-        if agent_id and agent_id == account_id:
-            result.add(agent_id)
-    return result
+def existing_allow_from(account):
+    values = account.get("allowFrom")
+    if isinstance(values, list) and values:
+        return values
+    return None
+
+def dm_allow_from():
+    if dm_policy == "open":
+        return ["*"]
+    if dm_policy == "allowlist" and allow_owner_dm and owner_id:
+        return [owner_id]
+    return None
+
+def group_allow_from_values():
+    if group_sender_policy == "open":
+        return None
+    if group_allow_from:
+        return group_allow_from
+    if owner_only_groups and owner_id:
+        return [owner_id]
+    return ["*"]
 
 config = {}
 if config_path.exists():
@@ -372,9 +380,15 @@ telegram = channels.setdefault("telegram", {})
 accounts = telegram.setdefault("accounts", {})
 
 telegram["defaultAccount"] = "orchestrator"
-telegram["groupPolicy"] = "disabled"
-if owner_id:
-    telegram["allowFrom"] = [owner_id]
+telegram["groupPolicy"] = "allowlist"
+
+top_level_dm_allow = dm_allow_from()
+if top_level_dm_allow is not None:
+    telegram["allowFrom"] = top_level_dm_allow
+elif dm_policy == "open":
+    telegram.pop("allowFrom", None)
+elif dm_policy == "allowlist" and isinstance(telegram.get("allowFrom"), list) and telegram.get("allowFrom"):
+    telegram["allowFrom"] = telegram.get("allowFrom")
 
 configured_agents = []
 topic_routes = []
@@ -384,12 +398,12 @@ for agent_id in agent_ids:
     account["groups"] = normalize_groups(account.get("groups"))
 
     token_env_var = f"{agent_id.upper()}_TELEGRAM_BOT_TOKEN"
-    bot_token = (os.environ.get(token_env_var, "") or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
+    bot_token = (os.environ.get(token_env_var) or "").strip()
     if not bot_token:
         bot_token = existing_bot_token(account)
 
     topic_env_var = f"{agent_id.upper()}_TOPIC_ID"
-    topic_id = (os.environ.get(topic_env_var, "") or "").strip()
+    topic_id = (os.environ.get(topic_env_var) or "").strip()
     if not topic_id:
         topic_id = first_existing_topic(account)
 
@@ -397,14 +411,25 @@ for agent_id in agent_ids:
         continue
 
     account["botToken"] = bot_token
-    account["dmPolicy"] = "allowlist"
-    account["groupPolicy"] = "allowlist"
+    account["dmPolicy"] = dm_policy
+    account["groupPolicy"] = group_sender_policy
     account["reactionLevel"] = "minimal"
     account["streaming"] = {"mode": "off"}
     account["commands"] = {"nativeSkills": False}
-    if owner_id:
-        account["allowFrom"] = [owner_id]
-        account["groupAllowFrom"] = [owner_id]
+
+    allow_from = dm_allow_from()
+    if allow_from is not None:
+        account["allowFrom"] = allow_from
+    elif dm_policy == "open":
+        account.pop("allowFrom", None)
+    elif dm_policy == "allowlist" and existing_allow_from(account):
+        account["allowFrom"] = existing_allow_from(account)
+
+    group_allow = group_allow_from_values()
+    if group_allow is not None:
+        account["groupAllowFrom"] = group_allow
+    else:
+        account.pop("groupAllowFrom", None)
 
     configured_agents.append(agent_id)
 
@@ -415,7 +440,7 @@ for agent_id in agent_ids:
         group["groupPolicy"] = "open"
         group["requireMention"] = False
         group["topics"] = group.get("topics") or {}
-        topic = {}
+        topic = dict(group["topics"].get(str(topic_id)) or {})
         topic["enabled"] = True
         topic["groupPolicy"] = "open"
         topic["requireMention"] = False
@@ -457,6 +482,7 @@ merged_bindings = [
     entry for entry in bindings
     if not is_team_topic_binding(entry) and not is_team_dm_binding(entry)
 ]
+
 for agent_id, topic_id in topic_routes:
     merged_bindings.append({
         "type": "route",
@@ -471,33 +497,38 @@ for agent_id, topic_id in topic_routes:
         },
     })
 
-for agent_id in configured_agents:
-    if not any(agent_id == current for current, _ in topic_routes):
-        merged_bindings.append({
-            "type": "route",
-            "agentId": agent_id,
-            "match": {
-                "channel": "telegram",
-                "accountId": agent_id,
-            },
-        })
+if route_dms_if_no_topic:
+    for agent_id in configured_agents:
+        if not any(agent_id == current for current, _ in topic_routes):
+            merged_bindings.append({
+                "type": "route",
+                "agentId": agent_id,
+                "match": {
+                    "channel": "telegram",
+                    "accountId": agent_id,
+                },
+            })
 
 config["bindings"] = merged_bindings
-
 config_path.parent.mkdir(parents=True, exist_ok=True)
 config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 summary = {
     "configured_agents": configured_agents,
     "topic_routes": topic_routes,
+    "dm_policy": dm_policy,
+    "group_sender_policy": group_sender_policy,
 }
 summary_path.write_text(json.dumps(summary, ensure_ascii=False), encoding="utf-8")
 PY
 
 configured_count="$(python3 - "$SUMMARY_PATH" <<'PY'
-import json, sys
+import json
+import sys
+
 with open(sys.argv[1], encoding="utf-8") as fh:
     data = json.load(fh)
+
 print(len(data.get("configured_agents") or []))
 PY
 )"
@@ -509,7 +540,9 @@ if [ "$configured_count" -eq 0 ]; then
 fi
 
 python3 - "$SUMMARY_PATH" <<'PY'
-import json, sys
+import json
+import sys
+
 with open(sys.argv[1], encoding="utf-8") as fh:
     data = json.load(fh)
 

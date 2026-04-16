@@ -175,10 +175,10 @@ configure_runtime_integrations() {
   local openai_transcriber_enabled=0
   local broadcast_strategy="${OPENCLAW_BROADCAST_STRATEGY:-parallel}"
   local agents_max_concurrent="${OPENCLAW_AGENTS_MAX_CONCURRENT:-6}"
-  local agents_subagents_max_concurrent="${OPENCLAW_AGENTS_SUBAGENTS_MAX_CONCURRENT:-$agents_max_concurrent}"
-  local queue_mode="${OPENCLAW_MESSAGES_QUEUE_MODE:-interrupt}"
-  local queue_debounce_ms="${OPENCLAW_MESSAGES_QUEUE_DEBOUNCE_MS:-200}"
-  local queue_cap="${OPENCLAW_MESSAGES_QUEUE_CAP:-32}"
+  local agents_subagents_max_concurrent="${OPENCLAW_AGENTS_SUBAGENTS_MAX_CONCURRENT:-8}"
+  local queue_mode="${OPENCLAW_MESSAGES_QUEUE_MODE:-collect}"
+  local queue_debounce_ms="${OPENCLAW_MESSAGES_QUEUE_DEBOUNCE_MS:-1000}"
+  local queue_cap="${OPENCLAW_MESSAGES_QUEUE_CAP:-20}"
   local queue_drop="${OPENCLAW_MESSAGES_QUEUE_DROP:-summarize}"
   local telegram_queue_mode="${OPENCLAW_MESSAGES_QUEUE_TELEGRAM_MODE:-}"
   local audio_timeout="${OPENCLAW_AUDIO_TIMEOUT_SECONDS:-90}"
@@ -243,12 +243,12 @@ agents_subagents_max_concurrent = _to_int(
     os.environ.get("OPENCLAW_RUNTIME_AGENTS_SUBAGENTS_MAX_CONCURRENT"),
     agents_max_concurrent,
 )
-queue_mode = (os.environ.get("OPENCLAW_RUNTIME_QUEUE_MODE") or "interrupt").strip()
+queue_mode = (os.environ.get("OPENCLAW_RUNTIME_QUEUE_MODE") or "collect").strip()
 if queue_mode not in ALLOWED_QUEUE_MODES:
-    queue_mode = "interrupt"
+    queue_mode = "collect"
 
-queue_debounce_ms = _to_int(os.environ.get("OPENCLAW_RUNTIME_QUEUE_DEBOUNCE_MS"), 200)
-queue_cap = _to_int(os.environ.get("OPENCLAW_RUNTIME_QUEUE_CAP"), 32)
+queue_debounce_ms = _to_int(os.environ.get("OPENCLAW_RUNTIME_QUEUE_DEBOUNCE_MS"), 1000)
+queue_cap = _to_int(os.environ.get("OPENCLAW_RUNTIME_QUEUE_CAP"), 20)
 
 queue_drop = (os.environ.get("OPENCLAW_RUNTIME_QUEUE_DROP") or "summarize").strip()
 if queue_drop not in ALLOWED_QUEUE_DROP:
@@ -308,6 +308,11 @@ defaults["typingIntervalSeconds"] = 6
 defaults["maxConcurrent"] = max(1, agents_max_concurrent)
 defaults.setdefault("subagents", {})
 defaults["subagents"]["maxConcurrent"] = max(1, agents_subagents_max_concurrent)
+defaults["subagents"].setdefault("maxChildrenPerAgent", 8)
+defaults["subagents"].setdefault("maxSpawnDepth", 2)
+defaults["subagents"].setdefault("runTimeoutSeconds", 900)
+defaults["subagents"].setdefault("archiveAfterMinutes", 180)
+defaults["subagents"].setdefault("requireAgentId", True)
 
 broadcast = config.setdefault("broadcast", {})
 broadcast["strategy"] = broadcast_strategy
@@ -535,6 +540,30 @@ openclaw --profile "$OPENCLAW_PROFILE" config set \
 openclaw --profile "$OPENCLAW_PROFILE" config set \
   "tools.agentToAgent.allow" \
   "$ALLOWED_AGENTS_JSON" \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.subagents.allowAgents" \
+  "$ALLOWED_AGENTS_JSON" \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.subagents.maxSpawnDepth" \
+  2 \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.subagents.maxChildrenPerAgent" \
+  8 \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.subagents.runTimeoutSeconds" \
+  900 \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.subagents.archiveAfterMinutes" \
+  180 \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.subagents.requireAgentId" \
+  true \
   --strict-json >/dev/null 2>&1 || true
 echo ""
 

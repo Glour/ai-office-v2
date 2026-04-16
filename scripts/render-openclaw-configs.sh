@@ -6,8 +6,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${1:-$ROOT_DIR/.env}"
 source "$ROOT_DIR/team-config.sh"
-OPENCLAW_DIR="$(team_openclaw_state_dir)"
-AGENTS=( $(team_active_agent_ids) )
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "❌ Env file not found: $ENV_FILE" >&2
@@ -18,6 +16,10 @@ fi
 set -a
 source "$ENV_FILE"
 set +a
+
+OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
+OPENCLAW_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")"
+AGENTS=( $(team_active_agent_ids) )
 
 command -v python3 >/dev/null 2>&1 || {
   echo "❌ python3 is required for config rendering." >&2
@@ -31,6 +33,40 @@ is_real_secret() {
   [[ "$value" != *placeholder* ]] || return 1
   [[ "$value" != *changeme* ]] || return 1
   return 0
+}
+
+normalize_bool() {
+  case "$(printf '%s' "${1:-false}" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes|on)
+      printf 'true'
+      ;;
+    *)
+      printf 'false'
+      ;;
+  esac
+}
+
+resolve_bot_token() {
+  local agent_id="${1:-}"
+  local upper_agent token_var
+  local fallback="${RENDER_TELEGRAM_TOKEN_FALLBACK_ALLOWED:-false}"
+
+  [ -n "$agent_id" ] || return 1
+  upper_agent="$(printf '%s' "$agent_id" | tr '[:lower:]' '[:upper:]')"
+  token_var="${upper_agent}_TELEGRAM_BOT_TOKEN"
+
+  local token="${!token_var:-}"
+  if is_real_secret "$token"; then
+    printf '%s' "$token"
+    return 0
+  fi
+
+  if [ "$(normalize_bool "$fallback")" = "true" ] && is_real_secret "${TELEGRAM_BOT_TOKEN:-}"; then
+    printf '%s' "${TELEGRAM_BOT_TOKEN}"
+    return 0
+  fi
+
+  return 1
 }
 
 OPENCLAW_AUTH_CHOICE="${OPENCLAW_AUTH_CHOICE:-}"
@@ -88,17 +124,80 @@ if isinstance(remote_agents, dict):
 PY
 }
 
+STRICT_TOKENS="$(normalize_bool "${STRICT_TELEGRAM_TOKENS:-true}")"
+if [ "$STRICT_TOKENS" = "true" ]; then
+  export RENDER_TELEGRAM_TOKEN_FALLBACK_ALLOWED="false"
+else
+  export RENDER_TELEGRAM_TOKEN_FALLBACK_ALLOWED="${RENDER_TELEGRAM_TOKEN_FALLBACK_ALLOWED:-false}"
+fi
+
+MISSING_TOKEN_AGENTS=()
+TOKEN_SPECS=""
+
 for agent in "${AGENTS[@]}"; do
   TOKEN_VAR="$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')_TELEGRAM_BOT_TOKEN"
+  TOKEN_VALUE="$(resolve_bot_token "$agent" || true)"
 
-  TOKEN_VALUE="${!TOKEN_VAR:-}"
-
-  if [[ -z "$TOKEN_VALUE" ]]; then
-    if [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]]; then
-      export "$TOKEN_VAR=$TELEGRAM_BOT_TOKEN"
-      TOKEN_VALUE="$TELEGRAM_BOT_TOKEN"
-    fi
+  if [[ -n "$TOKEN_VALUE" ]]; then
+    export "$TOKEN_VAR=$TOKEN_VALUE"
+    TOKEN_SPECS="${TOKEN_SPECS}${agent}"$'\t'"${TOKEN_VALUE}"$'\n'
+  else
+    MISSING_TOKEN_AGENTS+=("$agent")
   fi
+done
+
+DUPLICATE_TOKEN_AGENTS=()
+while IFS= read -r duplicate_entry; do
+  [ -n "$duplicate_entry" ] || continue
+  DUPLICATE_TOKEN_AGENTS+=("$duplicate_entry")
+done < <(
+  TOKEN_SPECS_PAYLOAD="$TOKEN_SPECS" python3 - <<'PY'
+import collections
+import os
+
+items = []
+for raw_line in os.environ.get("TOKEN_SPECS_PAYLOAD", "").splitlines():
+    line = raw_line.strip()
+    if not line:
+        continue
+    agent, token = line.split("\t", 1)
+    items.append((agent, token))
+
+owners = collections.defaultdict(list)
+for agent, token in items:
+    owners[token].append(agent)
+
+for token, agents in owners.items():
+    if len(agents) > 1:
+        print(", ".join(agents))
+PY
+)
+
+if [ "${#MISSING_TOKEN_AGENTS[@]}" -gt 0 ] || [ "${#DUPLICATE_TOKEN_AGENTS[@]}" -gt 0 ]; then
+  echo ""
+  if [ "${#MISSING_TOKEN_AGENTS[@]}" -gt 0 ]; then
+    echo "❌ Missing Telegram bot tokens for active agents:"
+    for agent in "${MISSING_TOKEN_AGENTS[@]}"; do
+      echo "  - ${agent} (set ${agent^^}_TELEGRAM_BOT_TOKEN)"
+    done
+  fi
+  if [ "${#DUPLICATE_TOKEN_AGENTS[@]}" -gt 0 ]; then
+    echo "❌ Duplicate Telegram bot tokens detected (one token per bot):"
+    for entry in "${DUPLICATE_TOKEN_AGENTS[@]}"; do
+      echo "  - $entry"
+    done
+    echo "   Fix by assigning unique tokens in .env."
+  fi
+  echo ""
+  echo "Set bot tokens, or if you must temporarily migrate:"
+  echo "  RENDER_TELEGRAM_TOKEN_FALLBACK_ALLOWED=true"
+  echo "but this is not safe for parallel runs."
+  exit 1
+fi
+
+for agent in "${AGENTS[@]}"; do
+  TOKEN_VAR="$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')_TELEGRAM_BOT_TOKEN"
+  TOKEN_VALUE="${!TOKEN_VAR:-}"
 
   SRC="$ROOT_DIR/configs/${agent}.openclaw.json.example"
   DST_DIR="$OPENCLAW_DIR/agents/$agent"

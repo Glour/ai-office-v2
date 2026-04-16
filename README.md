@@ -149,6 +149,12 @@ ADMIN_TOPIC_ID=19
 bash scripts/configure-telegram-topics.sh
 ```
 
+Практические defaults для стабильной topic-команды:
+- у каждого агента свой уникальный `*_TELEGRAM_BOT_TOKEN`
+- `TEAM_TELEGRAM_GROUP_SENDER_POLICY=open` — любой участник разрешённой группы может писать в topic без `@mention`
+- `TEAM_TELEGRAM_DM_POLICY=allowlist` — прямые DM остаются под контролем owner allowlist
+- если хотите owner-only режим в группе, включайте `TEAM_TELEGRAM_OWNER_ONLY_GROUPS=true`
+
 Полезные команды:
 
 ```bash
@@ -160,7 +166,7 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 - входная точка для пользователя — `orchestrator`
 - multi-step и multi-agent задачи сначала уходят в `producer`
 - прямой запрос в конкретный топик агенту тоже допустим
-- делегирование между агентами идёт через `sessions_send`, а не через хаотичную пересылку сообщений
+- быстрый inline handoff идёт через `sessions_send`, длинная user-facing работа — через `sessions_spawn` / completion path
 - `tester` отвечает за repro, smoke/e2e, acceptance, security smoke и внятные bug reports
 - `admin` ведёт таблицы, бюджеты, документы, согласования, административные и финансовые контуры
 
@@ -181,7 +187,7 @@ bash scripts/send-team-topic.sh backend "Проверь API-маршрут и л
 Основные скрипты:
 - `scripts/deploy-team.sh` — создаёт/обновляет workspaces агентов
 - `scripts/render-openclaw-configs.sh` — рендерит `openclaw.json` из шаблонов
-- `scripts/setup.sh` — регистрирует команду в обычном профиле OpenClaw
+- `scripts/setup.sh` — регистрирует команду в обычном профиле OpenClaw, включает cross-agent delegation и безопасные queue defaults
 - `scripts/start-team.sh` — поднимает gateway
 - `scripts/stop-team.sh` — останавливает gateway
 - `scripts/configure-telegram-topics.sh` — включает topic routing
