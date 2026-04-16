@@ -14,6 +14,46 @@
 - operating model: `orchestrator -> producer -> specialists`
 - Telegram-группа и топики: опционально, но поддерживаются штатно
 
+## Как правильно изолировать агентов на одном сервере
+
+Не нужен отдельный сервер под каждого агента.
+
+Правильная схема:
+- один сервер
+- один OpenClaw profile под одну команду или одно окружение
+- один общий gateway на этот profile
+- отдельный workspace на каждого агента
+- отдельный `agent dir` и отдельная память/сессии на каждого агента внутри profile
+
+Рекомендуемый server layout:
+
+```bash
+OPENCLAW_PROFILE=alex-team
+OPENCLAW_DIR=$HOME/.openclaw-alex-team
+OPENCLAW_AGENTS_DIR=$HOME/openclaw-agents-alex-team
+WORKSPACE_PATH=$HOME/openclaw-agents-alex-team
+```
+
+То есть изоляция делается не отдельными серверами, а через:
+- `profile` — изоляция состояния OpenClaw команды
+- `OPENCLAW_AGENTS_DIR/<agent>` — изоляция рабочего каталога агента
+- `OPENCLAW_DIR/agents/<agent>` — изоляция runtime-конфига, prompt pack и sessions
+
+Для постепенного rollout есть `ENABLED_AGENT_IDS`:
+
+```bash
+ENABLED_AGENT_IDS=orchestrator
+```
+
+Потом расширяешь:
+
+```bash
+ENABLED_AGENT_IDS=orchestrator,producer
+ENABLED_AGENT_IDS=orchestrator,producer,frontend
+```
+
+Если `ENABLED_AGENT_IDS` не задан, поднимется вся команда из `team-config.sh`.
+
 Ролевая карта:
 - `orchestrator` - пользовательский вход, маршрутизация, финальная доставка
 - `producer` - board-first координация, briefing, декомпозиция, handoff между агентами
@@ -36,6 +76,16 @@ cp .env.example .env
 - `OPENCLAW_AUTH_CHOICE=openai-codex` — рекомендованный путь через `codex login`
 - `OPENCLAW_AUTH_CHOICE=openai-api-key` + `OPENAI_API_KEY=...` — прямой OpenAI API
 
+Для нормальной изоляции на сервере сразу задай:
+
+```bash
+OPENCLAW_PROFILE=alex-team
+OPENCLAW_DIR=$HOME/.openclaw-alex-team
+OPENCLAW_AGENTS_DIR=$HOME/openclaw-agents-alex-team
+WORKSPACE_PATH=$HOME/openclaw-agents-alex-team
+ENABLED_AGENT_IDS=orchestrator
+```
+
 Опциональные интеграции, которые `bash scripts/setup.sh` включит автоматически для всей команды, если ключи заданы в серверном `.env`:
 - `DEEPGRAM_API_KEY=...` — автоматическая расшифровка voice/audio
 - `PERPLEXITY_API_KEY=...` — web search по умолчанию через `Perplexity`
@@ -52,6 +102,14 @@ bash scripts/deploy-team.sh
 ```bash
 bash scripts/setup.sh
 ```
+
+Когда будешь подключать следующего агента, просто меняешь `ENABLED_AGENT_IDS` в `.env` и повторяешь:
+
+```bash
+bash scripts/setup.sh
+```
+
+Это не требует нового сервера. Агент просто добавляется в тот же profile, но со своим отдельным workspace.
 
 5. Подними общий gateway:
 

@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${1:-$ROOT_DIR/.env}"
 source "$ROOT_DIR/team-config.sh"
 OPENCLAW_DIR="$(team_openclaw_state_dir)"
-AGENTS=( $(team_agent_ids) )
+AGENTS=( $(team_active_agent_ids) )
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "❌ Env file not found: $ENV_FILE" >&2
@@ -18,6 +18,11 @@ fi
 set -a
 source "$ENV_FILE"
 set +a
+
+command -v python3 >/dev/null 2>&1 || {
+  echo "❌ python3 is required for config rendering." >&2
+  exit 1
+}
 
 is_real_secret() {
   local value="${1:-}"
@@ -52,6 +57,36 @@ export THINKING_DEFAULT="${THINKING_DEFAULT:-high}"
 export REASONING_DEFAULT="${REASONING_DEFAULT:-on}"
 export EMBEDDING_PROVIDER="${EMBEDDING_PROVIDER:-openai}"
 export EMBEDDING_MODEL="${EMBEDDING_MODEL:-text-embedding-3-small}"
+ACTIVE_AGENT_IDS_JSON="$(printf '%s\n' "${AGENTS[@]}" | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')"
+
+filter_remote_agents() {
+  local config_path="$1"
+  local self_agent="$2"
+
+  ACTIVE_AGENT_IDS_JSON="$ACTIVE_AGENT_IDS_JSON" python3 - "$config_path" "$self_agent" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+config_path = Path(sys.argv[1])
+self_agent = sys.argv[2]
+active_ids = set(json.loads(os.environ["ACTIVE_AGENT_IDS_JSON"]))
+
+data = json.loads(config_path.read_text(encoding="utf-8"))
+agents = data.get("agents") or {}
+remote_agents = agents.get("remoteAgents")
+
+if isinstance(remote_agents, dict):
+    agents["remoteAgents"] = {
+        agent_id: payload
+        for agent_id, payload in remote_agents.items()
+        if agent_id in active_ids and agent_id != self_agent
+    }
+    data["agents"] = agents
+    config_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+}
 
 for agent in "${AGENTS[@]}"; do
   TOKEN_VAR="$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')_TELEGRAM_BOT_TOKEN"
@@ -79,6 +114,8 @@ for agent in "${AGENTS[@]}"; do
   # shellcheck disable=SC2016
   perl -pe 's/\{\{([A-Z0-9_]+)\}\}/(exists $ENV{$1} ? $ENV{$1} : "")/ge' \
     "$SRC" > "$DST"
+
+  filter_remote_agents "$DST" "$agent"
 
   if command -v rg >/dev/null 2>&1; then
     if rg -q '\{\{' "$DST"; then

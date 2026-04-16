@@ -44,13 +44,12 @@ TEAM_AGENTS=()
 while IFS= read -r agent; do
   [ -z "$agent" ] && continue
   TEAM_AGENTS+=("$agent")
-done < <(team_agent_ids)
+done < <(team_active_agent_ids)
 
 TEAM_NAMES=()
-while IFS= read -r name; do
-  [ -z "$name" ] && continue
-  TEAM_NAMES+=("$name")
-done < <(team_agent_names)
+for agent in "${TEAM_AGENTS[@]}"; do
+  TEAM_NAMES+=("$(team_agent_name "$agent")")
+done
 if [ "${#TEAM_AGENTS[@]}" -ne "${#TEAM_NAMES[@]}" ]; then
   echo "⚠️ TEAM_AGENT_IDS и TEAM_AGENT_NAMES длины не совпадают."
 fi

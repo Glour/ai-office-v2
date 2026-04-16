@@ -66,7 +66,7 @@ echo "Force:          $FORCE"
 echo ""
 
 # List of agents
-AGENTS=( $(team_agent_ids) )
+AGENTS=( $(team_active_agent_ids) )
 ORCHESTRATOR_ID="$(team_orchestrator_id)"
 
 resolve_agent_workspace_dir() {

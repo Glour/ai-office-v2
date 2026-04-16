@@ -63,6 +63,15 @@ for agent in $(team_agent_ids); do
   export "TOPIC_${upper_agent}=${!topic_var:-$agent}"
 done
 
+ACTIVE_AGENTS=( $(team_active_agent_ids) )
+BOOTSTRAP_AGENT="${ACTIVE_AGENTS[0]}"
+for agent in "${ACTIVE_AGENTS[@]}"; do
+  if [ "$agent" = "$(team_orchestrator_id)" ]; then
+    BOOTSTRAP_AGENT="$agent"
+    break
+  fi
+done
+
 json_string() {
   printf '"%s"' "$1"
 }
@@ -163,6 +172,16 @@ write_runtime_provider_env() {
 configure_runtime_integrations() {
   local deepgram_enabled=0
   local perplexity_enabled=0
+  local openai_transcriber_enabled=0
+  local broadcast_strategy="${OPENCLAW_BROADCAST_STRATEGY:-parallel}"
+  local agents_max_concurrent="${OPENCLAW_AGENTS_MAX_CONCURRENT:-6}"
+  local agents_subagents_max_concurrent="${OPENCLAW_AGENTS_SUBAGENTS_MAX_CONCURRENT:-$agents_max_concurrent}"
+  local queue_mode="${OPENCLAW_MESSAGES_QUEUE_MODE:-interrupt}"
+  local queue_debounce_ms="${OPENCLAW_MESSAGES_QUEUE_DEBOUNCE_MS:-200}"
+  local queue_cap="${OPENCLAW_MESSAGES_QUEUE_CAP:-32}"
+  local queue_drop="${OPENCLAW_MESSAGES_QUEUE_DROP:-summarize}"
+  local telegram_queue_mode="${OPENCLAW_MESSAGES_QUEUE_TELEGRAM_MODE:-}"
+  local audio_timeout="${OPENCLAW_AUDIO_TIMEOUT_SECONDS:-90}"
 
   if is_real_secret "${DEEPGRAM_API_KEY:-}"; then
     deepgram_enabled=1
@@ -172,13 +191,39 @@ configure_runtime_integrations() {
     perplexity_enabled=1
   fi
 
+  if is_real_secret "${OPENAI_API_KEY:-}"; then
+    openai_transcriber_enabled=1
+  fi
+
   OPENCLAW_RUNTIME_DEEPGRAM="$deepgram_enabled" \
   OPENCLAW_RUNTIME_PERPLEXITY="$perplexity_enabled" \
-  python3 - "$OPENCLAW_STATE_DIR/openclaw.json" <<'PY'
+  OPENCLAW_RUNTIME_OPENAI_TRANSCRIBE="$openai_transcriber_enabled" \
+  OPENCLAW_RUNTIME_BROADCAST_STRATEGY="$broadcast_strategy" \
+  OPENCLAW_RUNTIME_AGENTS_MAX_CONCURRENT="$agents_max_concurrent" \
+  OPENCLAW_RUNTIME_AGENTS_SUBAGENTS_MAX_CONCURRENT="$agents_subagents_max_concurrent" \
+  OPENCLAW_RUNTIME_QUEUE_MODE="$queue_mode" \
+  OPENCLAW_RUNTIME_QUEUE_DEBOUNCE_MS="$queue_debounce_ms" \
+  OPENCLAW_RUNTIME_QUEUE_CAP="$queue_cap" \
+  OPENCLAW_RUNTIME_QUEUE_DROP="$queue_drop" \
+  OPENCLAW_RUNTIME_TELEGRAM_QUEUE_MODE="$telegram_queue_mode" \
+  OPENCLAW_RUNTIME_AUDIO_TIMEOUT="$audio_timeout" \
+python3 - "$OPENCLAW_STATE_DIR/openclaw.json" <<'PY'
 import json
 import os
 import sys
 from pathlib import Path
+
+ALLOWED_QUEUE_MODES = {
+    "steer", "followup", "collect", "steer-backlog", "steer+backlog", "queue", "interrupt"
+}
+ALLOWED_BROADCAST_STRATEGY = {"parallel", "sequential"}
+ALLOWED_QUEUE_DROP = {"old", "new", "summarize"}
+
+def _to_int(value, fallback):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
 
 config_path = Path(sys.argv[1])
 if not config_path.exists():
@@ -187,24 +232,57 @@ if not config_path.exists():
 config = json.loads(config_path.read_text(encoding="utf-8"))
 deepgram_enabled = os.environ.get("OPENCLAW_RUNTIME_DEEPGRAM") == "1"
 perplexity_enabled = os.environ.get("OPENCLAW_RUNTIME_PERPLEXITY") == "1"
+openai_transcribe_enabled = os.environ.get("OPENCLAW_RUNTIME_OPENAI_TRANSCRIBE") == "1"
+
+broadcast_strategy = (os.environ.get("OPENCLAW_RUNTIME_BROADCAST_STRATEGY") or "parallel").strip()
+if broadcast_strategy not in ALLOWED_BROADCAST_STRATEGY:
+    broadcast_strategy = "parallel"
+
+agents_max_concurrent = _to_int(os.environ.get("OPENCLAW_RUNTIME_AGENTS_MAX_CONCURRENT"), 6)
+agents_subagents_max_concurrent = _to_int(
+    os.environ.get("OPENCLAW_RUNTIME_AGENTS_SUBAGENTS_MAX_CONCURRENT"),
+    agents_max_concurrent,
+)
+queue_mode = (os.environ.get("OPENCLAW_RUNTIME_QUEUE_MODE") or "interrupt").strip()
+if queue_mode not in ALLOWED_QUEUE_MODES:
+    queue_mode = "interrupt"
+
+queue_debounce_ms = _to_int(os.environ.get("OPENCLAW_RUNTIME_QUEUE_DEBOUNCE_MS"), 200)
+queue_cap = _to_int(os.environ.get("OPENCLAW_RUNTIME_QUEUE_CAP"), 32)
+
+queue_drop = (os.environ.get("OPENCLAW_RUNTIME_QUEUE_DROP") or "summarize").strip()
+if queue_drop not in ALLOWED_QUEUE_DROP:
+    queue_drop = "summarize"
+
+telegram_queue_mode = (os.environ.get("OPENCLAW_RUNTIME_TELEGRAM_QUEUE_MODE") or "").strip()
+if telegram_queue_mode and telegram_queue_mode not in ALLOWED_QUEUE_MODES:
+    telegram_queue_mode = ""
+
+audio_timeout = _to_int(os.environ.get("OPENCLAW_RUNTIME_AUDIO_TIMEOUT"), 90)
 
 tools = config.setdefault("tools", {})
 media = tools.setdefault("media", {})
 audio = media.setdefault("audio", {})
 audio["enabled"] = True
-audio["timeoutSeconds"] = 90
+audio["timeoutSeconds"] = audio_timeout
 audio["echoTranscript"] = False
 audio_models = []
 if deepgram_enabled:
     audio_models.append({"provider": "deepgram", "model": "nova-3"})
-audio_models.append({"provider": "openai", "model": "gpt-4o-transcribe"})
-audio["models"] = audio_models
-provider_options = audio.setdefault("providerOptions", {})
-if deepgram_enabled:
-    provider_options["deepgram"] = {"smart_format": True, "punctuate": True}
+elif openai_transcribe_enabled:
+    audio_models.append({"provider": "openai", "model": "gpt-4o-transcribe"})
+if audio_models:
+    audio["models"] = audio_models
+    provider_options = audio.setdefault("providerOptions", {})
+    if deepgram_enabled:
+        provider_options["deepgram"] = {"smart_format": True, "punctuate": True}
+    else:
+        provider_options.pop("deepgram", None)
+    if not provider_options:
+        audio.pop("providerOptions", None)
 else:
-    provider_options.pop("deepgram", None)
-if not provider_options:
+    audio["enabled"] = False
+    audio.pop("models", None)
     audio.pop("providerOptions", None)
 
 web = tools.setdefault("web", {})
@@ -227,11 +305,33 @@ agents = config.setdefault("agents", {})
 defaults = agents.setdefault("defaults", {})
 defaults["typingMode"] = "instant"
 defaults["typingIntervalSeconds"] = 6
+defaults["maxConcurrent"] = max(1, agents_max_concurrent)
+defaults.setdefault("subagents", {})
+defaults["subagents"]["maxConcurrent"] = max(1, agents_subagents_max_concurrent)
+
+broadcast = config.setdefault("broadcast", {})
+broadcast["strategy"] = broadcast_strategy
+
+messages = config.setdefault("messages", {})
+message_queue = {
+  "mode": queue_mode,
+  "debounceMs": queue_debounce_ms,
+  "cap": queue_cap,
+  "drop": queue_drop
+}
+if telegram_queue_mode:
+  message_queue.setdefault("byChannel", {})
+  message_queue["byChannel"]["telegram"] = telegram_queue_mode
+messages["queue"] = message_queue
 
 config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print("tools.media.audio enabled")
 print("tools.web.search enabled")
 print("tools.web.fetch enabled")
+print(f"broadcast.strategy = {broadcast_strategy}")
+print(f"agents.defaults.maxConcurrent = {agents_max_concurrent}")
+print(f"agents.defaults.subagents.maxConcurrent = {agents_subagents_max_concurrent}")
+print(f"messages.queue.mode = {queue_mode}")
 if deepgram_enabled:
     print("deepgram audio configured")
 if perplexity_enabled:
@@ -266,7 +366,7 @@ fi
 
 # Agent mapping: directory name -> OpenClaw agent name
 AGENT_MAP=()
-for id in "${TEAM_AGENT_IDS[@]}"; do
+for id in "${ACTIVE_AGENTS[@]}"; do
   AGENT_MAP+=("$id:$id")
 done
 
@@ -285,7 +385,7 @@ if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
       --skip-ui \
       --skip-health \
       --auth-choice openai-codex \
-      --workspace "$WORKSPACE_ROOT/$(team_orchestrator_id)"
+      --workspace "$WORKSPACE_ROOT/$BOOTSTRAP_AGENT"
   else
     openclaw --profile "$OPENCLAW_PROFILE" onboard \
       --mode local \
@@ -298,7 +398,7 @@ if [ ! -f "$OPENCLAW_STATE_DIR/openclaw.json" ]; then
       --skip-ui \
       --skip-health \
       --auth-choice skip \
-      --workspace "$WORKSPACE_ROOT/$(team_orchestrator_id)"
+      --workspace "$WORKSPACE_ROOT/$BOOTSTRAP_AGENT"
   fi
   echo ""
 fi
@@ -373,7 +473,7 @@ echo ""
 echo "🧭 Registering agents in OpenClaw profile..."
 REGISTERED_AGENTS="$(openclaw --profile "$OPENCLAW_PROFILE" agents list 2>/dev/null || true)"
 AGENT_DEFAULT_SPECS=""
-for id in "${TEAM_AGENT_IDS[@]}"; do
+for id in "${ACTIVE_AGENTS[@]}"; do
   if [ "$id" = "$(team_orchestrator_id)" ]; then
     model="$MAIN_MODEL"
   else
@@ -396,7 +496,7 @@ for id in "${TEAM_AGENT_IDS[@]}"; do
 done
 
 SYNCED_DEFAULTS="$(sync_registered_agent_defaults "$AGENT_DEFAULT_SPECS" || true)"
-for id in "${TEAM_AGENT_IDS[@]}"; do
+for id in "${ACTIVE_AGENTS[@]}"; do
   if printf '%s\n' "$SYNCED_DEFAULTS" | grep -Fxq "$id"; then
     echo "  ⚙ $id defaults synced"
   else
@@ -423,7 +523,7 @@ openclaw --profile "$OPENCLAW_PROFILE" doctor --fix >/dev/null 2>&1 || true
 echo ""
 
 echo "🔗 Enabling cross-agent delegation..."
-ALLOWED_AGENTS_JSON="$(printf '%s\n' "${TEAM_AGENT_IDS[@]}" | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')"
+ALLOWED_AGENTS_JSON="$(printf '%s\n' "${ACTIVE_AGENTS[@]}" | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')"
 openclaw --profile "$OPENCLAW_PROFILE" config set \
   "tools.sessions.visibility" \
   '"all"' \
@@ -445,9 +545,9 @@ echo ""
 # Verify installation
 echo "🔍 Verifying..."
 AGENT_COUNT=$(find "$OPENCLAW_AGENTS_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
-echo "  Agents installed: $AGENT_COUNT/${TEAM_AGENT_COUNT}"
-if [ "$AGENT_COUNT" -lt "$TEAM_AGENT_COUNT" ]; then
-  echo "  ⚠ Expected ${TEAM_AGENT_COUNT} agents. Check the output above for errors."
+echo "  Agents installed: $AGENT_COUNT/${#ACTIVE_AGENTS[@]}"
+if [ "$AGENT_COUNT" -lt "${#ACTIVE_AGENTS[@]}" ]; then
+  echo "  ⚠ Expected ${#ACTIVE_AGENTS[@]} active agents. Check the output above for errors."
 fi
 
 # Source placeholders in repo templates are expected and rendered into workspaces.

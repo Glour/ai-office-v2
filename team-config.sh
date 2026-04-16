@@ -35,6 +35,45 @@ team_agent_ids() {
   printf '%s\n' "${TEAM_AGENT_IDS[@]}"
 }
 
+team_active_agent_ids() {
+  local raw="${ENABLED_AGENT_IDS:-}"
+  local token
+  local cleaned
+  local normalized
+  local seen=""
+  local resolved=()
+
+  if [ -z "$raw" ]; then
+    team_agent_ids
+    return 0
+  fi
+
+  normalized="${raw//,/ }"
+  for token in $normalized; do
+    cleaned="$(printf '%s' "$token" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [ -n "$cleaned" ] || continue
+
+    if ! team_agent_is_valid_id "$cleaned"; then
+      echo "❌ Unknown agent id in ENABLED_AGENT_IDS: $cleaned" >&2
+      return 1
+    fi
+
+    case " $seen " in
+      *" $cleaned "*) continue ;;
+    esac
+
+    seen="$seen $cleaned"
+    resolved+=("$cleaned")
+  done
+
+  if [ "${#resolved[@]}" -eq 0 ]; then
+    echo "❌ ENABLED_AGENT_IDS is set, but no valid agent ids were found." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${resolved[@]}"
+}
+
 team_agent_names() {
   printf '%s\n' "${TEAM_AGENT_NAMES[@]}"
 }

@@ -276,7 +276,7 @@ echo "🧭 Configuring Telegram topic routing"
 echo "Profile: $OPENCLAW_PROFILE"
 echo "Group:   $TEAM_TELEGRAM_GROUP_ID"
 
-TEAM_AGENT_IDS_PAYLOAD="$(team_agent_ids)"
+TEAM_AGENT_IDS_PAYLOAD="$(team_active_agent_ids)"
 SUMMARY_PATH="$(mktemp)"
 
 TEAM_AGENT_IDS_PAYLOAD="$TEAM_AGENT_IDS_PAYLOAD" \
@@ -412,13 +412,14 @@ for agent_id in agent_ids:
         groups = account.setdefault("groups", {})
         group = groups.setdefault(group_id, {})
         group["enabled"] = True
-        group["groupPolicy"] = "disabled"
+        group["groupPolicy"] = "open"
         group["requireMention"] = False
-        group["topics"] = {}
+        group["topics"] = group.get("topics") or {}
         topic = {}
         topic["enabled"] = True
         topic["groupPolicy"] = "open"
         topic["requireMention"] = False
+        topic["agentId"] = agent_id
         group["topics"][str(topic_id)] = topic
         topic_routes.append((agent_id, str(topic_id)))
 
@@ -456,15 +457,6 @@ merged_bindings = [
     entry for entry in bindings
     if not is_team_topic_binding(entry) and not is_team_dm_binding(entry)
 ]
-for agent_id in configured_agents:
-    merged_bindings.append({
-        "type": "route",
-        "agentId": agent_id,
-        "match": {
-            "channel": "telegram",
-            "accountId": agent_id,
-        },
-    })
 for agent_id, topic_id in topic_routes:
     merged_bindings.append({
         "type": "route",
@@ -478,6 +470,18 @@ for agent_id, topic_id in topic_routes:
             },
         },
     })
+
+for agent_id in configured_agents:
+    if not any(agent_id == current for current, _ in topic_routes):
+        merged_bindings.append({
+            "type": "route",
+            "agentId": agent_id,
+            "match": {
+                "channel": "telegram",
+                "accountId": agent_id,
+            },
+        })
+
 config["bindings"] = merged_bindings
 
 config_path.parent.mkdir(parents=True, exist_ok=True)
