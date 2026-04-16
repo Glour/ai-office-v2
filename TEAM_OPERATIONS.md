@@ -31,6 +31,12 @@
 - Особенно строго это правило для orchestration layer.
 - Producer-first routing сохраняется: orchestration не должно залипать в одной сессии, если работу можно вынести в owner flow.
 
+## Link formatting rule
+- Любые ссылки в user-facing сообщениях отправлять только plain text.
+- Не оборачивать ссылки в markdown, code formatting, angle brackets или иные декоративные оболочки.
+- Цель правила: ссылка должна оставаться кликабельной и удобной для копирования на Telegram и других поверхностях.
+- Если в сообщении несколько ссылок, каждая должна быть отдельным plain-text URL без дополнительной разметки.
+
 ## Config hygiene
 - Перед повторным team setup или routing на OpenClaw `2026.4.12+` полезно прогонять `openclaw --profile default doctor --fix`.
 - В Telegram config `topics` должны быть object, не list.
