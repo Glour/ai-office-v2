@@ -58,6 +58,11 @@ for agent in "${TEAM_AGENT_IDS[@]}"; do
   target_dir="$OPENCLAW_AGENTS_ROOT/$agent/agent"
   [ -d "$target_dir" ] || continue
 
+  if [ "$AUTH_SOURCE" = "$target_dir/auth-profiles.json" ]; then
+    SYNCED=$((SYNCED + 1))
+    continue
+  fi
+
   install -d -m 700 "$target_dir"
   install -m 600 "$AUTH_SOURCE" "$target_dir/auth-profiles.json"
   SYNCED=$((SYNCED + 1))
