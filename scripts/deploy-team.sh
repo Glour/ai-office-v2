@@ -142,7 +142,7 @@ done
 echo ""
 echo "📋 Copying shared references..."
 for agent in "${AGENTS[@]}"; do
-  AGENT_DIR="$BASE_DIR/$agent"
+  AGENT_DIR="$(resolve_agent_workspace_dir "$agent")"
   [ -d "$AGENT_DIR/references" ] || mkdir -p "$AGENT_DIR/references"
 
   if [ -f "$REFS_DIR/team-constitution.md" ]; then
@@ -173,7 +173,7 @@ echo "  ✓ References copied"
 echo "📜 Copying scripts..."
 SHARED_SCRIPTS=("self-heal.sh" "trash-agent-session.sh" "agent-health-check.sh")
 for agent in "${AGENTS[@]}"; do
-  AGENT_DIR="$BASE_DIR/$agent"
+  AGENT_DIR="$(resolve_agent_workspace_dir "$agent")"
   [ -d "$AGENT_DIR/scripts" ] || mkdir -p "$AGENT_DIR/scripts"
 
   for script in "${SHARED_SCRIPTS[@]}"; do
@@ -192,7 +192,7 @@ echo "  ✓ Scripts copied"
 # ── Config examples ──────────────────────────────────────────────────────────
 echo "⚙️  Copying config examples..."
 for agent in "${AGENTS[@]}"; do
-  AGENT_DIR="$BASE_DIR/$agent"
+  AGENT_DIR="$(resolve_agent_workspace_dir "$agent")"
   EXAMPLE="$CONFIGS_DIR/$agent.openclaw.json.example"
 
   if [ -f "$EXAMPLE" ]; then

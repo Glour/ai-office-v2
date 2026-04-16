@@ -17,10 +17,38 @@ fi
 OPENCLAW_PROFILE="${OPENCLAW_PROFILE:-default}"
 OPENCLAW_STATE_DIR="$(team_openclaw_state_dir "$OPENCLAW_PROFILE")"
 OPENCLAW_AGENTS_ROOT="$OPENCLAW_STATE_DIR/agents"
-AUTH_SOURCE="${OPENCLAW_AUTH_SOURCE:-$HOME/.openclaw/agents/main/agent/auth-profiles.json}"
+
+resolve_auth_source() {
+  local candidate
+
+  if [ -n "${OPENCLAW_AUTH_SOURCE:-}" ] && [ -f "${OPENCLAW_AUTH_SOURCE}" ]; then
+    printf '%s' "${OPENCLAW_AUTH_SOURCE}"
+    return 0
+  fi
+
+  for candidate in \
+    "$OPENCLAW_AGENTS_ROOT/$(team_orchestrator_id)/agent/auth-profiles.json" \
+    "$OPENCLAW_AGENTS_ROOT/main/agent/auth-profiles.json"
+  do
+    if [ -f "$candidate" ]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+
+  while IFS= read -r candidate; do
+    [ -f "$candidate" ] || continue
+    printf '%s' "$candidate"
+    return 0
+  done < <(find "$OPENCLAW_AGENTS_ROOT" -mindepth 3 -maxdepth 3 -path '*/agent/auth-profiles.json' -type f 2>/dev/null | sort)
+
+  return 1
+}
+
+AUTH_SOURCE="$(resolve_auth_source || true)"
 
 if [ ! -f "$AUTH_SOURCE" ]; then
-  echo "⚠️  Auth source not found: $AUTH_SOURCE"
+  echo "⚠️  Auth source not found in $OPENCLAW_AGENTS_ROOT"
   echo "   Skipping auth profile sync."
   exit 0
 fi
