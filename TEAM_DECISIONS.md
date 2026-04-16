@@ -45,3 +45,4 @@
 - При расширении команды сначала переносить знания в curated memory и skills layer, а уже потом добавлять новых агентов, иначе новые роли будут такими же "пустыми" по контексту.
 - Для Vibegent core baseline skills: `ru-text` и self-improvement layer (исторически `self-improving-agent`, в team library сейчас `self-improvement`).
 - Для хорошего Telegram UX нельзя полагаться только на skills, нужны ещё runtime/prompt rules: ранний ACK, компактный self-closing ответ, без простыней и без burst из нескольких сообщений.
+- Любые user-facing ссылки команда отправляет только plain text URL, без markdown, code formatting и другой обёртки, чтобы ссылка оставалась кликабельной и удобной для копирования.
