@@ -1,6 +1,6 @@
 # Skills Library
 
-42 shared skills available to all agents.
+49 shared skills available to all agents.
 
 ## How Skills Work
 
@@ -37,6 +37,10 @@
 | `gog` | Google Workspace CLI for Gmail, Calendar, Drive, Contacts, Sheets, and Docs. Use when user asks about email, calendar events, Google Drive files, contacts, spreadsheets. Triggers on 'почта', 'gmail', 'календарь', 'calendar', 'google drive', 'контакты', 'таблица', 'sheets'. |
 | `graphic-design` | Support design understanding from basic visuals to professional production and theory. |
 | `healthcheck` | Host security hardening and system health checks for OpenClaw deployments. |
+| `ivangdavila-cro` | CRO playbook for funnel analysis, A/B testing, conversion audits, and compliance-safe experiments. Imported from ClawHub, namespaced in repo to avoid collision with generic `cro`. |
+| `ivangdavila-landing-page` | Высококонверсионные landing pages: структура, copy, optimization, sections, templates. Imported from ClawHub, namespaced in repo to avoid collision with generic `landing-page`. |
+| `jk-sales-funnel-design` | Sales funnel design for solopreneur and sales-led or self-serve motions. Imported from ClawHub, namespaced in repo. |
+| `kalin-afrexai-conversion-copywriting` | Conversion copywriting system for landing pages, emails, ads, sales pages, CTAs, and scripts. Imported from ClawHub, namespaced in repo. |
 | `landing-builder` | Генератор одностраничных HTML лендингов на Tailwind CSS с продающей структурой и готовым output без сборки. |
 | `last30days` | Research a topic from the last 30 days on Reddit + X + Web, become an expert, and write copy-paste-ready prompts for the user's target tool. |
 | `minimax-docx` | Professional DOCX document creation, editing, and formatting using OpenXML SDK (.NET). Covers creating new documents, editing existing ones, and applying template formatting with validation. |
@@ -49,6 +53,9 @@
 | `product-validator` | Автоматическая проверка продуктов перед сдачей: безопасность, стиль, структура, пути. Три типа: скилл, материал для группы, GitHub-проект. |
 | `quality-check` | Отдел контроля качества (ОТК). Обязательная проверка любого материала перед сдачей. Режимы: контент, GitHub публикация, Telegram пост. |
 | `reddit` | Browse, search, post, and moderate Reddit. Read-only works without auth, posting and moderation require OAuth. |
+| `alirezarezvani-marketing-context` | Build and maintain shared product or brand marketing context for later marketing work. Imported from ClawHub, namespaced in repo. |
+| `alirezarezvani-marketing-demand-acquisition` | Demand generation, paid acquisition, CAC, MQL/SQL, attribution, SEO, and partnership playbooks for scaling startups. Imported from ClawHub, namespaced in repo. |
+| `alirezarezvani-page-cro` | CRO analysis for marketing pages with a bundled conversion audit script. Imported from ClawHub, namespaced in repo. |
 | `researcher` | Универсальный ресёрчер. Поиск информации, анализ конкурентов, мониторинг трендов, разбор ссылок. Объединяет все инструменты поиска в один скилл. |
 | `ru-text` | Russian text quality and editing reference for typography, info-style, editorial, UX writing, and business correspondence. Auto-activates on Russian text output. |
 | `safeskillmonitor` | Безопасный мониторинг скиллов OpenClaw без выполнения shell-кода. |
