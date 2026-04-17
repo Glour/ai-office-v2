@@ -387,6 +387,7 @@ accounts = telegram.setdefault("accounts", {})
 telegram["defaultAccount"] = "orchestrator"
 telegram["groupPolicy"] = "allowlist"
 telegram["streaming"] = {"mode": streaming_mode}
+telegram["commands"] = {"native": False}
 
 top_level_dm_allow = dm_allow_from()
 if top_level_dm_allow is not None:
@@ -421,7 +422,7 @@ for agent_id in agent_ids:
     account["groupPolicy"] = group_sender_policy
     account["reactionLevel"] = "minimal"
     account["streaming"] = {"mode": streaming_mode}
-    account["commands"] = {"nativeSkills": False}
+    account["commands"] = {"native": False, "nativeSkills": False}
 
     allow_from = dm_allow_from()
     if allow_from is not None:
