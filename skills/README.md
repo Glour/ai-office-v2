@@ -52,7 +52,7 @@
 | `researcher` | Универсальный ресёрчер. Поиск информации, анализ конкурентов, мониторинг трендов, разбор ссылок. Объединяет все инструменты поиска в один скилл. |
 | `ru-text` | Russian text quality and editing reference for typography, info-style, editorial, UX writing, and business correspondence. Auto-activates on Russian text output. |
 | `safeskillmonitor` | Безопасный мониторинг скиллов OpenClaw без выполнения shell-кода. |
-| `self-improvement` | Captures learnings, errors, and corrections to enable continuous improvement after failures, corrections, missing capabilities, and recurring better approaches. |
+| `self-improving` | Self-reflection, self-criticism, self-learning, and self-organizing memory. Installed as the main package for the team. Compatibility alias `self-improvement` points to it. |
 | `skill-and-agent-creator` | Создание, улучшение и аудит скиллов и агентов OpenClaw. Три режима: создание скилла, создание агента, улучшение существующего. |
 | `swipe-file` | Анализ чужого контента (YouTube, Telegram, подкасты) для извлечения полезных идей, паттернов и улучшений. |
 | `systematic-debugging` | Систематическая отладка при любых багах, ошибках и неожиданном поведении. Используй перед предложением фиксов. |
