@@ -313,6 +313,16 @@ defaults["subagents"].setdefault("maxSpawnDepth", 2)
 defaults["subagents"].setdefault("runTimeoutSeconds", 900)
 defaults["subagents"].setdefault("archiveAfterMinutes", 180)
 defaults["subagents"].setdefault("requireAgentId", True)
+compaction = defaults.setdefault("compaction", {})
+compaction["mode"] = "safeguard"
+memory_flush = compaction.setdefault("memoryFlush", {})
+memory_flush["enabled"] = True
+memory_flush["softThresholdTokens"] = 6000
+memory_flush["prompt"] = (
+  "Контекст почти заполнен. Перед compaction тихо запиши durable handoff в memory/handoff.md: "
+  "что подтверждено, что в работе, что блокирует, какие следующие шаги. "
+  "Пиши кратко, без tool traces и служебного шума. После записи ответь NO_REPLY."
+)
 
 broadcast = config.setdefault("broadcast", {})
 broadcast["strategy"] = broadcast_strategy
@@ -337,6 +347,7 @@ print(f"broadcast.strategy = {broadcast_strategy}")
 print(f"agents.defaults.maxConcurrent = {agents_max_concurrent}")
 print(f"agents.defaults.subagents.maxConcurrent = {agents_subagents_max_concurrent}")
 print(f"messages.queue.mode = {queue_mode}")
+print("compaction.memoryFlush enabled")
 if deepgram_enabled:
     print("deepgram audio configured")
 if perplexity_enabled:
@@ -564,6 +575,31 @@ openclaw --profile "$OPENCLAW_PROFILE" config set \
 openclaw --profile "$OPENCLAW_PROFILE" config set \
   "agents.defaults.subagents.requireAgentId" \
   true \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.compaction.mode" \
+  '"safeguard"' \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.compaction.memoryFlush.enabled" \
+  true \
+  --strict-json >/dev/null 2>&1 || true
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.compaction.memoryFlush.softThresholdTokens" \
+  6000 \
+  --strict-json >/dev/null 2>&1 || true
+MEMORY_FLUSH_PROMPT_JSON="$(python3 - <<'PY'
+import json
+print(json.dumps(
+    "Контекст почти заполнен. Перед compaction тихо запиши durable handoff в memory/handoff.md: "
+    "что подтверждено, что в работе, что блокирует, какие следующие шаги. "
+    "Пиши кратко, без tool traces и служебного шума. После записи ответь NO_REPLY."
+))
+PY
+)"
+openclaw --profile "$OPENCLAW_PROFILE" config set \
+  "agents.defaults.compaction.memoryFlush.prompt" \
+  "$MEMORY_FLUSH_PROMPT_JSON" \
   --strict-json >/dev/null 2>&1 || true
 echo ""
 

@@ -202,6 +202,7 @@ TEAM_TELEGRAM_ALLOW_OWNER_DM="$(normalize_bool "${TEAM_TELEGRAM_ALLOW_OWNER_DM:-
 TEAM_TELEGRAM_OWNER_ONLY_GROUPS="$(normalize_bool "${TEAM_TELEGRAM_OWNER_ONLY_GROUPS:-false}")"
 TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC="$(normalize_bool "${TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC:-true}")"
 TEAM_TELEGRAM_GROUP_ALLOW_FROM="${TEAM_TELEGRAM_GROUP_ALLOW_FROM:-}"
+TEAM_TELEGRAM_STREAMING_MODE="${TEAM_TELEGRAM_STREAMING_MODE:-progress}"
 
 MISSING_TOKEN_AGENTS=()
 TOKEN_SPECS=""
@@ -275,6 +276,7 @@ TEAM_TELEGRAM_ALLOW_OWNER_DM="$TEAM_TELEGRAM_ALLOW_OWNER_DM" \
 TEAM_TELEGRAM_OWNER_ONLY_GROUPS="$TEAM_TELEGRAM_OWNER_ONLY_GROUPS" \
 TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC="$TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC" \
 TEAM_TELEGRAM_GROUP_ALLOW_FROM="$TEAM_TELEGRAM_GROUP_ALLOW_FROM" \
+TEAM_TELEGRAM_STREAMING_MODE="$TEAM_TELEGRAM_STREAMING_MODE" \
 python3 - <<'PY'
 import json
 import os
@@ -291,11 +293,14 @@ allow_owner_dm = os.environ.get("TEAM_TELEGRAM_ALLOW_OWNER_DM") == "true"
 owner_only_groups = os.environ.get("TEAM_TELEGRAM_OWNER_ONLY_GROUPS") == "true"
 route_dms_if_no_topic = os.environ.get("TEAM_TELEGRAM_ROUTE_DMS_IF_NO_TOPIC") == "true"
 group_allow_from = [item.strip() for item in (os.environ.get("TEAM_TELEGRAM_GROUP_ALLOW_FROM") or "").split(",") if item.strip()]
+streaming_mode = (os.environ.get("TEAM_TELEGRAM_STREAMING_MODE") or "progress").strip()
 
 if dm_policy not in {"pairing", "allowlist", "open", "disabled"}:
     dm_policy = "allowlist"
 if group_sender_policy not in {"open", "allowlist", "disabled"}:
     group_sender_policy = "open"
+if streaming_mode not in {"off", "partial", "block", "progress"}:
+    streaming_mode = "progress"
 
 def normalize_key(value):
     if isinstance(value, str) and len(value) >= 2 and value[0] == value[-1] == '"':
@@ -381,6 +386,7 @@ accounts = telegram.setdefault("accounts", {})
 
 telegram["defaultAccount"] = "orchestrator"
 telegram["groupPolicy"] = "allowlist"
+telegram["streaming"] = {"mode": streaming_mode}
 
 top_level_dm_allow = dm_allow_from()
 if top_level_dm_allow is not None:
@@ -414,7 +420,7 @@ for agent_id in agent_ids:
     account["dmPolicy"] = dm_policy
     account["groupPolicy"] = group_sender_policy
     account["reactionLevel"] = "minimal"
-    account["streaming"] = {"mode": "off"}
+    account["streaming"] = {"mode": streaming_mode}
     account["commands"] = {"nativeSkills": False}
 
     allow_from = dm_allow_from()

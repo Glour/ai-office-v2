@@ -6,6 +6,8 @@ md5sum() { python3 -c "import hashlib,sys; print(hashlib.md5(open(sys.argv[1],'r
 
 set -euo pipefail
 
+SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Cross-platform stat
 if [[ "$OSTYPE" == "darwin"* ]]; then
   file_mtime() { stat -f %m "$1" 2>/dev/null || echo 0; }
@@ -37,6 +39,7 @@ HEALTH_URL="http://127.0.0.1:18789/health"
 FIXED=0
 FAILED=0
 ALERTS=""
+HEAVY_SESSION_THRESHOLD="${HEAVY_SESSION_THRESHOLD:-50000}"
 
 mkdir -p "$(dirname "$LOG")"
 
@@ -190,7 +193,24 @@ except Exception as e:
   fi
 }
 
-# ============ 7. BACKUP GATEWAYS ============
+# ============ 7. HEAVY SESSION HYGIENE ============
+check_heavy_sessions() {
+  local reset_script="$SCRIPTS_DIR/reset-heavy-team-sessions.sh"
+  [ -x "$reset_script" ] || return
+
+  local output
+  output=$(bash "$reset_script" --all --threshold="$HEAVY_SESSION_THRESHOLD" 2>&1 || true)
+
+  if echo "$output" | grep -q "✅ "; then
+    local cleaned
+    cleaned=$(printf '%s\n' "$output" | grep -c "^✅ " || true)
+    log "🧹 Heavy session cleanup ran: cleaned=${cleaned:-0}"
+    alert "🧹 Сброшены тяжёлые agent-сессии: ${cleaned:-0}"
+    FIXED=$((FIXED+1))
+  fi
+}
+
+# ============ 8. BACKUP GATEWAYS ============
 # Cross-platform service restart helper
 restart_service() {
   local svc="$1"
@@ -206,7 +226,7 @@ get_service_pid() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     launchctl list "$svc" 2>/dev/null | grep '"PID"' | grep -o '[0-9]*' || echo ""
   elif command -v systemctl &>/dev/null; then
-    systemctl --user show -p MainPID "$svc" 2>/dev/null | cut -d= -f2 || echo ""
+    systemctl --user show "$svc" --property MainPID --value 2>/dev/null || echo ""
   else
     echo ""
   fi
@@ -214,6 +234,9 @@ get_service_pid() {
 
 check_agents() {
   for svc in com.{{YOUR_BRAND}}.gateway-backup com.{{YOUR_BRAND}}.gateway; do
+    if [[ "$svc" == *"{{"* ]]; then
+      continue
+    fi
     local pid
     pid=$(get_service_pid "$svc")
     if [ -z "$pid" ] || [ "$pid" = "0" ]; then
@@ -236,6 +259,7 @@ check_memory
 check_disk
 check_docker
 check_crons
+check_heavy_sessions
 check_agents
 
 if [ $FIXED -gt 0 ] || [ $FAILED -gt 0 ]; then

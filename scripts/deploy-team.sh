@@ -171,7 +171,7 @@ echo "  ✓ References copied"
 
 # ── Shared scripts ───────────────────────────────────────────────────────────
 echo "📜 Copying scripts..."
-SHARED_SCRIPTS=("self-heal.sh" "trash-agent-session.sh" "agent-health-check.sh")
+SHARED_SCRIPTS=("self-heal.sh" "trash-agent-session.sh" "reset-heavy-team-sessions.sh" "agent-health-check.sh")
 for agent in "${AGENTS[@]}"; do
   AGENT_DIR="$(resolve_agent_workspace_dir "$agent")"
   [ -d "$AGENT_DIR/scripts" ] || mkdir -p "$AGENT_DIR/scripts"
