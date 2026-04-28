@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "name": "Hermes",
+  "model": {
+    "default": "{{AGENT_MODEL}}"
+  },
+  "thinkingDefault": "{{THINKING_DEFAULT}}",
+  "reasoningDefault": "{{REASONING_DEFAULT}}",
+  "apiKeys": {
+    "openai": "{{OPENAI_API_KEY}}",
+    "deepseek": "{{DEEPSEEK_API_KEY}}"
+  },
+  "memory": {
+    "enabled": true,
+    "provider": "local",
+    "embedding": {
+      "provider": "{{EMBEDDING_PROVIDER}}",
+      "model": "{{EMBEDDING_MODEL}}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true,
+        "config": {
+          "botToken": "{{HERMES_TELEGRAM_BOT_TOKEN}}"
+        }
+      }
+    }
+  },
+  "agents": {
+    "remoteAgents": {
+      "orchestrator": {
+        "sessionKey": "agent:orchestrator:main",
+        "description": "User-facing owner and escalations"
+      },
+      "producer": {
+        "sessionKey": "agent:producer:main",
+        "description": "Coordination owner for board, sequencing, and handoff"
+      },
+      "frontend": {
+        "sessionKey": "agent:frontend:main",
+        "description": "Frontend and landing/user-facing UI"
+      },
+      "backend": {
+        "sessionKey": "agent:backend:main",
+        "description": "Backend, infra, runtime, integrations"
+      },
+      "tester": {
+        "sessionKey": "agent:tester:main",
+        "description": "QA and security gate"
+      },
+      "design": {
+        "sessionKey": "agent:design:main",
+        "description": "Visual direction and interface quality"
+      },
+      "content": {
+        "sessionKey": "agent:content:main",
+        "description": "Wording, documents, and packaging"
+      },
+      "media": {
+        "sessionKey": "agent:media:main",
+        "description": "Images, audio, video and media assets"
+      },
+      "research": {
+        "sessionKey": "agent:research:main",
+        "description": "Facts and external source checks"
+      },
+      "admin": {
+        "sessionKey": "agent:admin:main",
+        "description": "Finance, docs, tables, admin ops"
+      }
+    }
+  },
+  "workspace": {
+    "path": "{{WORKSPACE_PATH}}/hermes"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "intervalMinutes": 30
+  },
+  "exec": {
+    "defaultTimeoutSeconds": 30
+  }
+}

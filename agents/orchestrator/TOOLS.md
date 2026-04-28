@@ -42,3 +42,7 @@ Read `references/team-constitution.md` first - it's the single source of truth.
 - Simple questions - answer directly
 - File delivery - always through proper channels
 - Async user-facing delivery - through completion-capable path, not fire-and-forget
+
+
+## Hermes
+- Hermes (`agent:hermes:main`) - коммуникационный и операционный агент для быстрых поручений, связок и маршрутизации.

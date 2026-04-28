@@ -13,6 +13,7 @@ TEAM_AGENT_IDS=(
   "media"
   "research"
   "admin"
+  "hermes"
 )
 
 TEAM_ORCHESTRATOR_ID="orchestrator"
@@ -29,6 +30,7 @@ TEAM_AGENT_NAMES=(
   "Блик"
   "Радар"
   "Баланс"
+  "Гермес"
 )
 
 team_agent_ids() {

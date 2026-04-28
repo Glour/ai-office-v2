@@ -20,3 +20,7 @@
 - Team repo: `/root/home/agent-team`; agent workspaces: `/root/home/openclaw-agents`.
 - Board-first обязателен для multi-agent и long-running задач.
 - Не светить токены, auth profiles, raw env и личную память.
+
+
+## Hermes
+- Hermes (`agent:hermes:main`) - коммуникационный и операционный агент для быстрых поручений, связок и маршрутизации.
