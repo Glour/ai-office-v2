@@ -30,7 +30,7 @@
 - Если речь про platform/backend/worker, сначала проверять live target, а не доверять старым заметкам.
 - Жёсткая карта окружений: `46.225.185.7` = prod, `46.225.63.177` = dev.
 - Vibegent worker: `95.217.20.174`.
-- Agent Platform: FastAPI + SQLAlchemy async + PostgreSQL + Redis.
+- Vibegent: FastAPI + SQLAlchemy async + PostgreSQL + Redis.
 - Backend контейнер платформы: `agentplatform-backend`, порт `8001`.
 - PostgreSQL платформы: `5433`.
 - Пользовательских агентов нельзя запускать на backend-серверах, только на worker nodes.

@@ -33,12 +33,12 @@
 
 ## Главный project-context, который должен знать вся команда
 - Название продукта по умолчанию: **Vibegent**.
-- Если задача про наш стек неочевидна, сначала классифицировать её: `agent-team`, `agent-platform`, `Vibegent`, `Viably` или side-project.
-- Если речь идёт про agent platform / platform / backend / worker без отдельного уточнения, сначала проверять live target и только потом действовать.
+- Если задача про наш стек неочевидна, сначала классифицировать её: `agent-team`, `Vibegent`, `Viably` или side-project.
+- Если речь идёт про Vibegent / platform / backend / worker без отдельного уточнения, сначала проверять live target и только потом действовать.
 - Жёсткая карта окружений: `46.225.185.7` = prod, `46.225.63.177` = dev.
 - Vibegent worker: `95.217.20.174` (`vibegent-worker-01`).
-- Agent Platform находится на dev-host в `/root/home/agent-platform/`.
-- GitHub remote Agent Platform после переименования: `git@github.com:viably-labs/vibegent.git`.
+- Vibegent находится на dev-host в `/root/home/vibegent/`; старый путь `/root/home/agent-platform` оставлен только как compatibility symlink.
+- GitHub remote Vibegent: `git@github.com:viably-labs/vibegent.git`.
 - Пользовательских агентов нельзя запускать на backend-серверах, только на worker nodes.
 
 ## Repo и runtime: как это устроено
@@ -69,7 +69,7 @@
 - В legacy team-конфиге `topics` уже один раз ломались из-за хранения в виде массива с индексами topic-id. При миграциях это нужно проверять первым.
 
 ## Инфраструктурные ориентиры
-- Agent Platform: FastAPI + SQLAlchemy async + PostgreSQL + Redis.
+- Vibegent: FastAPI + SQLAlchemy async + PostgreSQL + Redis.
 - Backend контейнер платформы: `agentplatform-backend`, порт `8001`.
 - PostgreSQL платформы: порт `5433`.
 - Proxy endpoint для агентского трафика: `POST /api/proxy/v1/messages`.
