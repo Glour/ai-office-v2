@@ -37,7 +37,8 @@
 - Если речь идёт про agent platform / platform / backend / worker без отдельного уточнения, сначала проверять live target и только потом действовать.
 - Жёсткая карта окружений: `46.225.185.7` = prod, `46.225.63.177` = dev.
 - Vibegent worker: `95.217.20.174` (`vibegent-worker-01`).
-- Agent Platform находится в `/root/home/agent-platform/`.
+- Agent Platform находится на dev-host в `/root/home/agent-platform/`.
+- GitHub remote Agent Platform после переименования: `git@github.com:viably-labs/vibegent.git`.
 - Пользовательских агентов нельзя запускать на backend-серверах, только на worker nodes.
 
 ## Repo и runtime: как это устроено
