@@ -20,6 +20,7 @@
 - Если удалённый файл мог измениться, не правь вслепую локальную копию: сначала подтяни актуальное состояние, потом правь.
 - Все рабочие директории проектов держать только в `/root/home/`.
 - Не светить токены, auth profiles, raw env и приватные учётные данные.
+- Для клиентских/командных репозиториев коммиты по умолчанию должны идти от авторизованного GitHub-аккаунта Александра Олеговича `Glour`; не добавлять agent/AI signatures, Co-authored-by, внутренние run IDs, tool traces или self-referential AI wording в commit messages, PR descriptions, code comments и публичные артефакты. Публичная история должна быть чистой и профессиональной; не делать ложных заявлений о процессе разработки.
 
 ## Команда agent-team
 - Состав команды: `orchestrator`, `producer`, `frontend`, `backend`, `tester`, `design`, `content`, `media`, `research`, `admin`.
