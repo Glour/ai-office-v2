@@ -445,7 +445,7 @@ for agent_id in agent_ids:
         group = groups.setdefault(group_id, {})
         group["enabled"] = True
         group["groupPolicy"] = "open"
-        group["requireMention"] = False
+        group["requireMention"] = True
         group["topics"] = group.get("topics") or {}
         topic = dict(group["topics"].get(str(topic_id)) or {})
         topic["enabled"] = True

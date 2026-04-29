@@ -36,11 +36,11 @@ if [ -z "$OPENCLAW_AUTH_CHOICE" ]; then
 fi
 
 if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
-  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.5"
 elif [ "$OPENCLAW_AUTH_CHOICE" = "openai-api-key" ]; then
   DEFAULT_TEAM_MODEL="openai/gpt-5.4"
 else
-  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.5"
 fi
 
 MAIN_MODEL="${MAIN_MODEL:-$DEFAULT_TEAM_MODEL}"
@@ -519,6 +519,22 @@ for id in "${ACTIVE_AGENTS[@]}"; do
     echo "  ⚠ $id defaults not synced: agent entry not found in agents.list"
   fi
 done
+
+
+if [ "$OPENCLAW_AUTH_CHOICE" = "openai-codex" ]; then
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "agents.defaults.model.primary" \
+    '"openai-codex/gpt-5.5"' \
+    --strict-json >/dev/null 2>&1 || true
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "agents.defaults.model.fallbacks" \
+    '["openai-codex/gpt-5.4"]' \
+    --strict-json --replace >/dev/null 2>&1 || true
+  openclaw --profile "$OPENCLAW_PROFILE" config set \
+    "agents.defaults.models" \
+    '{"openai-codex/gpt-5.5":{},"openai-codex/gpt-5.4":{}}' \
+    --strict-json --replace >/dev/null 2>&1 || true
+fi
 
 echo ""
 

@@ -81,11 +81,11 @@ fi
 export OPENCLAW_AGENTS_DIR="${OPENCLAW_AGENTS_DIR:-$(team_openclaw_agents_dir)}"
 export WORKSPACE_PATH="${WORKSPACE_PATH:-$OPENCLAW_AGENTS_DIR}"
 if [[ "$OPENCLAW_AUTH_CHOICE" == "openai-codex" ]]; then
-  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.5"
 elif [[ "$OPENCLAW_AUTH_CHOICE" == "openai-api-key" ]]; then
   DEFAULT_TEAM_MODEL="openai/gpt-5.4"
 else
-  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.4"
+  DEFAULT_TEAM_MODEL="openai-codex/gpt-5.5"
 fi
 export MAIN_MODEL="${MAIN_MODEL:-$DEFAULT_TEAM_MODEL}"
 export AGENT_MODEL="${AGENT_MODEL:-$DEFAULT_TEAM_MODEL}"

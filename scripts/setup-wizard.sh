@@ -112,8 +112,8 @@ case "$LLM_CHOICE" in
   1)
     LLM_PROVIDER="openai-codex"
     OPENCLAW_AUTH_CHOICE="openai-codex"
-    MAIN_MODEL="openai-codex/gpt-5.4"
-    AGENT_MODEL="openai-codex/gpt-5.4"
+    MAIN_MODEL="openai-codex/gpt-5.5"
+    AGENT_MODEL="openai-codex/gpt-5.5"
     echo -e "  ${CYAN}Will use subscription auth via codex login${NC}"
     ;;
   2)
@@ -147,7 +147,7 @@ case "$LLM_CHOICE" in
     ;;
   6)
     LLM_PROVIDER="custom"
-    ask MAIN_MODEL "Main model (provider/model format)" "openai-codex/gpt-5.4" true
+    ask MAIN_MODEL "Main model (provider/model format)" "openai-codex/gpt-5.5" true
     AGENT_MODEL="$MAIN_MODEL"
     ;;
 esac
@@ -215,8 +215,8 @@ declare -A REPLACEMENTS=(
   ["{{GITHUB_ORG}}"]="${GITHUB_ORG:-$OWNER_USERNAME}"
   ["{{WORKSPACE_PATH}}"]="${WORKSPACE_PATH:-~/workspace/}"
   ["{{PROJECTS_PATH}}"]="${WORKSPACE_PATH:-~/workspace/}projects/"
-  ["{{MAIN_MODEL}}"]="${MAIN_MODEL:-openai-codex/gpt-5.4}"
-  ["{{AGENT_MODEL}}"]="${AGENT_MODEL:-openai-codex/gpt-5.4}"
+  ["{{MAIN_MODEL}}"]="${MAIN_MODEL:-openai-codex/gpt-5.5}"
+  ["{{AGENT_MODEL}}"]="${AGENT_MODEL:-openai-codex/gpt-5.5}"
   ["{{THINKING_DEFAULT}}"]="${THINKING_DEFAULT:-high}"
   ["{{REASONING_DEFAULT}}"]="${REASONING_DEFAULT:-on}"
   ["{{EMBEDDING_PROVIDER}}"]="${EMBEDDING_PROVIDER:-openai}"

@@ -6,16 +6,16 @@
 
 | Файл | Агент | Модель |
 |------|-------|--------|
-| `orchestrator.openclaw.json.example` | orchestrator | `gpt-5.4` |
-| `producer.openclaw.json.example` | producer | `gpt-5.4` |
-| `frontend.openclaw.json.example` | frontend | `gpt-5.4` |
-| `backend.openclaw.json.example` | backend | `gpt-5.4` |
-| `tester.openclaw.json.example` | tester | `gpt-5.4` |
-| `design.openclaw.json.example` | design | `gpt-5.4` |
-| `content.openclaw.json.example` | content | `gpt-5.4` |
-| `media.openclaw.json.example` | media | `gpt-5.4` |
-| `research.openclaw.json.example` | research | `gpt-5.4` |
-| `admin.openclaw.json.example` | admin | `gpt-5.4` |
+| `orchestrator.openclaw.json.example` | orchestrator | `gpt-5.5` |
+| `producer.openclaw.json.example` | producer | `gpt-5.5` |
+| `frontend.openclaw.json.example` | frontend | `gpt-5.5` |
+| `backend.openclaw.json.example` | backend | `gpt-5.5` |
+| `tester.openclaw.json.example` | tester | `gpt-5.5` |
+| `design.openclaw.json.example` | design | `gpt-5.5` |
+| `content.openclaw.json.example` | content | `gpt-5.5` |
+| `media.openclaw.json.example` | media | `gpt-5.5` |
+| `research.openclaw.json.example` | research | `gpt-5.5` |
+| `admin.openclaw.json.example` | admin | `gpt-5.5` |
 
 ### Что внутри шаблонов
 
