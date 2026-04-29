@@ -37,7 +37,7 @@
 - Если речь идёт про Vibegent / platform / backend / worker без отдельного уточнения, сначала проверять live target и только потом действовать.
 - Жёсткая карта окружений: `46.225.185.7` = prod, `46.225.63.177` = dev.
 - Vibegent worker: `95.217.20.174` (`vibegent-worker-01`).
-- Vibegent находится на dev-host в `/root/home/vibegent/`; старый путь `/root/home/agent-platform` оставлен только как compatibility symlink.
+- Vibegent находится на dev-host в `/root/home/vibegent/`; legacy symlink `/root/home/agent-platform` удалён. Root-level compatibility path для скриптов: `/root/vibegent -> /root/home/vibegent`.
 - GitHub remote Vibegent: `git@github.com:viably-labs/vibegent.git`.
 - Пользовательских агентов нельзя запускать на backend-серверах, только на worker nodes.
 

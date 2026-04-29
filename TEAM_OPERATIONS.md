@@ -75,5 +75,5 @@
 - Если переносится память, переносить именно curated information, а не токены, raw env, auth profiles или чувствительные личные данные.
 
 ## Полезные paths вне team repo
-- Vibegent source-of-truth: `/root/home/vibegent/backend/`, `/root/home/vibegent/generate-workspace.sh`, `/root/home/vibegent/provision-agent.sh`, `/root/home/vibegent/skills/`. Старый `/root/home/agent-platform` — только compatibility symlink.
+- Vibegent source-of-truth: `/root/home/vibegent/backend/`, `/root/home/vibegent/generate-workspace.sh`, `/root/home/vibegent/provision-agent.sh`, `/root/home/vibegent/skills/`. Legacy `/root/home/agent-platform` удалён; для root-level scripts использовать `/root/vibegent -> /root/home/vibegent`.
 - Если проблема касается Vibegent provisioning или default skills новых агентов, сначала смотреть именно эти paths.
